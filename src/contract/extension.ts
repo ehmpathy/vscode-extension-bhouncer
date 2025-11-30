@@ -3,8 +3,8 @@ import * as vscode from 'vscode';
 import { createExtensionState, ExtensionState } from '../domain.objects/ExtensionState';
 import { pruneEditors } from '../domain.operations/editors/pruneEditors';
 import { createOutput } from '../domain.operations/output/createOutput';
-import { killPidSafely } from '../domain.operations/processes/killPidSafely';
 import { checkAndUpdateLanguageServers } from '../domain.operations/servers/checkAndUpdateLanguageServers';
+import { disableAllLanguageServers } from '../domain.operations/servers/disableAllLanguageServers';
 import { initializeTrackers } from '../domain.operations/servers/initializeTrackers';
 import { showStatus } from '../domain.operations/servers/showStatus';
 import { loadTrackedPids } from '../domain.operations/state/loadTrackedPids';
@@ -103,7 +103,7 @@ export const activate = (vsContext: vscode.ExtensionContext): void => {
 
 /**
  * .what = vscode extension deactivation cleanup
- * .why = ensures all tracked pids are killed and resources released
+ * .why = ensures all language servers are disabled and resources released before window closes
  */
 export const deactivate = (): void => {
   state.output?.debug('deactivate.input', {});
@@ -113,25 +113,16 @@ export const deactivate = (): void => {
     clearInterval(state.pruneInterval);
   }
 
-  // kill all tracked pids
-  const killed: string[] = [];
-  const exited: string[] = [];
-  for (const [key, pid] of state.trackedPids) {
-    const result = killPidSafely({ pid });
-    if (result.killed) {
-      killed.push(`${key}:${pid}`);
-    } else {
-      exited.push(`${key}:${pid}`);
-    }
-  }
+  // disable all language servers and kill their pids
+  const { disabled, killed } = disableAllLanguageServers({ state });
 
   // clear state
   state.trackedPids.clear();
   state.editorLastAccess.clear();
 
   state.output?.debug('deactivate.output', {
+    disabled: disabled.length > 0 ? disabled : undefined,
     killed: killed.length > 0 ? killed : undefined,
-    exited: exited.length > 0 ? exited : undefined,
   });
 
   // dispose output channel

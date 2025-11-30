@@ -58,6 +58,22 @@ export const pruneEditors = async (context: {
     now,
   });
 
+  // debug: log selection details
+  context.state.output?.debug('pruneEditors.selectTabsToClose', {
+    tabsCount: tabs.length,
+    maxOpen,
+    idleTimeoutMs,
+    now,
+    tabs: tabs.map((t, i) => ({
+      index: i,
+      uri: t.uri.split('/').pop(),
+      lastAccess: t.lastAccess,
+      isOverLimit: i >= maxOpen,
+      isIdle: t.lastAccess > 0 && now - t.lastAccess > idleTimeoutMs,
+    })),
+    tabsToCloseCount: tabsToClose.length,
+  });
+
   // close selected tabs and update language servers
   if (tabsToClose.length > 0) {
     context.state.output?.debug('pruneEditors.output onClose', {
