@@ -1,0 +1,151 @@
+{
+  "name": "bhouncer",
+  "displayName": "Bhouncer",
+  "description": "Bounces stale editors and idle language servers to free up memory",
+  "version": "0.1.0",
+  "publisher": "ehmpathy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ehmpathy/vscode-extension-bhouncer"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/*"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Bhouncer",
+      "properties": {
+        "bhouncer.editors.maxOpen": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum number of editors to keep open"
+        },
+        "bhouncer.editors.idleTimeoutMinutes": {
+          "type": "number",
+          "default": 10,
+          "description": "Close editors idle for longer than this (minutes)"
+        },
+        "bhouncer.editors.excludePatterns": {
+          "type": "array",
+          "default": [],
+          "description": "Glob patterns for files to never auto-close (e.g., ['**/package.json'])"
+        },
+        "bhouncer.editors.excludePinned": {
+          "type": "boolean",
+          "default": true,
+          "description": "Never auto-close pinned tabs"
+        },
+        "bhouncer.editors.excludeDirty": {
+          "type": "boolean",
+          "default": true,
+          "description": "Never auto-close tabs with unsaved changes"
+        },
+        "bhouncer.servers": {
+          "type": "array",
+          "default": [
+            {
+              "extensions": [
+                ".tf",
+                ".tfvars"
+              ],
+              "settingKey": "terraform.languageServer.enable",
+              "processPattern": "terraform-ls"
+            },
+            {
+              "extensions": [
+                ".js",
+                ".jsx",
+                ".ts",
+                ".tsx",
+                ".mjs",
+                ".cjs"
+              ],
+              "settingKey": "eslint.enable",
+              "processPattern": "eslintServer"
+            },
+            {
+              "extensions": [
+                ".yaml",
+                ".yml"
+              ],
+              "settingKey": "yaml.validate",
+              "processPattern": "yaml-language-server"
+            },
+            {
+              "extensions": [
+                ".md",
+                ".markdown"
+              ],
+              "settingKey": "cSpell.enabled",
+              "processPattern": "code-spell-checker"
+            }
+          ],
+          "description": "Language servers to manage. Each entry needs: extensions (array), settingKey (string), processPattern (string)"
+        },
+        "bhouncer.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable bhouncer"
+        },
+        "bhouncer.output.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable output panel logging"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "bhouncer.pruneNow",
+        "title": "Bhouncer: Prune Editors Now"
+      },
+      {
+        "command": "bhouncer.showStatus",
+        "title": "Bhouncer: Show Status"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "compile": "tsc -p ./",
+    "build": "esbuild src/contract/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "jest",
+    "test:unit": "jest --testPathPattern='\\.test\\.ts$'",
+    "package": "vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "bottleneck": "^2.19.5",
+    "minimatch": "^9.0.0",
+    "rhachet": "^1.12.1",
+    "rhachet-roles-ehmpathy": "^1.9.1",
+    "simple-in-memory-cache": "^0.4.0",
+    "tsx": "^4.20.6",
+    "with-simple-cache": "^0.15.1"
+  },
+  "devDependencies": {
+    "@swc/core": "1.10.7",
+    "@swc/jest": "0.2.37",
+    "@types/jest": "29.5.14",
+    "@types/minimatch": "^5.1.0",
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "esbuild": "^0.27.0",
+    "eslint": "^8.0.0",
+    "jest": "29.7.0",
+    "test-fns": "1.5.0",
+    "typescript": "^5.0.0",
+    "vsce": "^2.15.0"
+  }
+}

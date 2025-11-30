@@ -1,0 +1,98 @@
+import { given, when, then } from 'test-fns';
+
+import { resetMocks, workspace } from '../../.test/mocks/vscode';
+import { createExtensionState } from '../../domain.objects/ExtensionState';
+import { createOutput } from '../output/createOutput';
+import { disableUntrackedServers } from './disableUntrackedServers';
+
+describe('disableUntrackedServers', () => {
+  beforeEach(() => {
+    resetMocks();
+    jest.clearAllMocks();
+  });
+
+  const terraformServer = {
+    extensions: ['.tf', '.tfvars'],
+    settingKey: 'terraform.languageServer.enable',
+    processPattern: 'terraform-ls',
+  };
+
+  const eslintServer = {
+    extensions: ['.js', '.ts'],
+    settingKey: 'eslint.enable',
+    processPattern: 'eslintServer',
+  };
+
+  given('untracked servers to disable', () => {
+    when('single server needs disabling', () => {
+      then('disables that server setting', async () => {
+        const state = createExtensionState();
+        state.output = createOutput({ enabled: false });
+
+        const mockUpdate = jest.fn();
+        workspace.getConfiguration.mockReturnValue({
+          get: jest.fn().mockReturnValue(true),
+          update: mockUpdate,
+        });
+
+        await disableUntrackedServers(
+          { untrackedServers: [terraformServer] },
+          { state },
+        );
+
+        expect(mockUpdate).toHaveBeenCalledWith(
+          'terraform.languageServer.enable',
+          false,
+          2, // vscode.ConfigurationTarget.Workspace
+        );
+      });
+    });
+
+    when('multiple servers need disabling', () => {
+      then('disables all server settings', async () => {
+        const state = createExtensionState();
+        state.output = createOutput({ enabled: false });
+
+        const mockUpdate = jest.fn();
+        workspace.getConfiguration.mockReturnValue({
+          get: jest.fn().mockReturnValue(true),
+          update: mockUpdate,
+        });
+
+        await disableUntrackedServers(
+          { untrackedServers: [terraformServer, eslintServer] },
+          { state },
+        );
+
+        expect(mockUpdate).toHaveBeenCalledTimes(2);
+        expect(mockUpdate).toHaveBeenCalledWith(
+          'terraform.languageServer.enable',
+          false,
+          2, // vscode.ConfigurationTarget.Workspace
+        );
+        expect(mockUpdate).toHaveBeenCalledWith(
+          'eslint.enable',
+          false,
+          2, // vscode.ConfigurationTarget.Workspace
+        );
+      });
+    });
+
+    when('no servers need disabling', () => {
+      then('does not update any settings', async () => {
+        const state = createExtensionState();
+        state.output = createOutput({ enabled: false });
+
+        const mockUpdate = jest.fn();
+        workspace.getConfiguration.mockReturnValue({
+          get: jest.fn(),
+          update: mockUpdate,
+        });
+
+        await disableUntrackedServers({ untrackedServers: [] }, { state });
+
+        expect(mockUpdate).not.toHaveBeenCalled();
+      });
+    });
+  });
+});
