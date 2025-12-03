@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import type { ExtensionState } from '../../domain.objects/ExtensionState';
+import { findsertVscodeGitignore } from './findsertVscodeGitignore';
 
 /**
  * .what = saves tracked pids to workspace state file
@@ -28,6 +29,13 @@ export const saveTrackedPids = (context: {
   if (!fs.existsSync(vscodeDir)) {
     fs.mkdirSync(vscodeDir, { recursive: true });
   }
+
+  // ensure state file is gitignored
+  findsertVscodeGitignore({ vscodeDir }).catch((error) =>
+    context.state.output?.warn('findsertVscodeGitignore.error', {
+      reason: error instanceof Error ? error.message : String(error),
+    }),
+  );
 
   // build state object
   const data = {

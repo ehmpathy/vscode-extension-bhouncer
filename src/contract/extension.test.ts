@@ -23,6 +23,9 @@ jest.mock('../domain.operations/servers/initializeTrackers', () => ({
 jest.mock('../domain.operations/processes/killPidSafely', () => ({
   killPidSafely: jest.fn().mockReturnValue({ killed: true }),
 }));
+jest.mock('../domain.operations/state/saveTrackedPids', () => ({
+  saveTrackedPids: jest.fn(),
+}));
 
 describe('extension', () => {
   beforeEach(() => {

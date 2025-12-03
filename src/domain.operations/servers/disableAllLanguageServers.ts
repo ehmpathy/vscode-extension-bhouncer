@@ -13,7 +13,7 @@ export const disableAllLanguageServers = (context: {
   state: ExtensionState;
 }): { disabled: string[]; killed: string[] } => {
   const config = vscode.workspace.getConfiguration('bhouncer');
-  const servers = config.get<LanguageServerConfig[]>('servers', []);
+  const servers = config.get<LanguageServerConfig[]>('servers', []) ?? [];
   const settings = vscode.workspace.getConfiguration();
 
   const disabled: string[] = [];

@@ -121,10 +121,11 @@
     "lint": "eslint src --ext ts",
     "test": "jest",
     "test:unit": "jest --testPathPattern='\\.test\\.ts$'",
-    "package": "vsce package --no-dependencies && echo 'codium --install-extension bhouncer-0.1.0.vsix'"
+    "package": "vsce package --no-dependencies && echo 'to install, run \n' && echo 'codium --install-extension bhouncer-0.1.0.vsix'"
   },
   "dependencies": {
     "bottleneck": "^2.19.5",
+    "helpful-errors": "^1.5.3",
     "minimatch": "^9.0.0",
     "rhachet": "^1.12.1",
     "rhachet-roles-ehmpathy": "^1.9.1",

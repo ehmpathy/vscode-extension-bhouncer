@@ -49,8 +49,14 @@ export const getEligibleTabsForPruning = (input: {
   }
 
   // sort by last access descending (most recent first)
+  // tabs with lastAccess=0 (untracked/newly opened) are treated as most recent
   return {
-    tabs: tabs.sort((a, b) => b.lastAccess - a.lastAccess),
     stats,
+    tabs: tabs.sort((a, b) => {
+      // treat 0 as "most recent" so newly opened tabs stay open
+      const aTime = a.lastAccess === 0 ? Infinity : a.lastAccess;
+      const bTime = b.lastAccess === 0 ? Infinity : b.lastAccess;
+      return bTime - aTime;
+    }),
   };
 };

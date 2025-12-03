@@ -8,6 +8,7 @@ import { disableAllLanguageServers } from '../domain.operations/servers/disableA
 import { initializeTrackers } from '../domain.operations/servers/initializeTrackers';
 import { showStatus } from '../domain.operations/servers/showStatus';
 import { loadTrackedPids } from '../domain.operations/state/loadTrackedPids';
+import { saveTrackedPids } from '../domain.operations/state/saveTrackedPids';
 
 // extension state instance
 let state: ExtensionState = createExtensionState();
@@ -50,16 +51,20 @@ export const activate = (vsContext: vscode.ExtensionContext): void => {
   // check language servers and prune editors on tab changes
   vsContext.subscriptions.push(
     vscode.window.tabGroups.onDidChangeTabs((event) => {
-      // log opened tabs
+      // track opened tabs as freshly accessed (prevents immediate re-close)
       for (const tab of event.opened) {
         if (tab.input instanceof vscode.TabInputText) {
+          const uri = tab.input.uri.toString();
+          state.editorLastAccess.set(uri, Date.now());
           state.output?.debug('onDidChangeTabs.opened', { path: tab.input.uri.fsPath });
         }
       }
 
-      // log closed tabs
+      // clean up closed tabs from access tracking
       for (const tab of event.closed) {
         if (tab.input instanceof vscode.TabInputText) {
+          const uri = tab.input.uri.toString();
+          state.editorLastAccess.delete(uri);
           state.output?.debug('onDidChangeTabs.closed', { path: tab.input.uri.fsPath });
         }
       }
@@ -115,6 +120,9 @@ export const deactivate = (): void => {
 
   // disable all language servers and kill their pids
   const { disabled, killed } = disableAllLanguageServers({ state });
+
+  // save state file before clearing (sync write maximizes success on shutdown)
+  saveTrackedPids({ state });
 
   // clear state
   state.trackedPids.clear();

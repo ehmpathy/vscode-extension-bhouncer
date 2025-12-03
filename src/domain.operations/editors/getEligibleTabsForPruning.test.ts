@@ -215,5 +215,69 @@ describe('getEligibleTabsForPruning', () => {
         expect(result.stats.total).toBe(3);
       });
     });
+
+    when('tabs have lastAccess=0 (untracked/newly opened)', () => {
+      then('sorts them first, treating as most recent', () => {
+        const now = Date.now();
+        const editorLastAccess = new Map([
+          ['file:///project/old.ts', now - 3000],
+          ['file:///project/newer.ts', now - 1000],
+          // newly-opened.ts has no entry => lastAccess = 0
+        ]);
+
+        window.tabGroups.all = [
+          createMockTabGroup([
+            createMockTab({ fsPath: '/project/old.ts' }),
+            createMockTab({ fsPath: '/project/newer.ts' }),
+            createMockTab({ fsPath: '/project/newly-opened.ts' }),
+          ]),
+        ];
+
+        const result = getEligibleTabsForPruning({
+          editorLastAccess,
+          excludePatterns: [],
+          excludePinned: true,
+          excludeDirty: true,
+        });
+
+        // newly opened (lastAccess=0) should be first, then by recency
+        expect(result.tabs).toHaveLength(3);
+        expect(result.tabs[0].uri).toContain('newly-opened.ts');
+        expect(result.tabs[0].lastAccess).toBe(0);
+        expect(result.tabs[1].uri).toContain('newer.ts');
+        expect(result.tabs[2].uri).toContain('old.ts');
+      });
+    });
+
+    when('multiple tabs have lastAccess=0', () => {
+      then('all are sorted before tracked tabs', () => {
+        const now = Date.now();
+        const editorLastAccess = new Map([
+          ['file:///project/tracked.ts', now - 1000],
+        ]);
+
+        window.tabGroups.all = [
+          createMockTabGroup([
+            createMockTab({ fsPath: '/project/tracked.ts' }),
+            createMockTab({ fsPath: '/project/new1.ts' }),
+            createMockTab({ fsPath: '/project/new2.ts' }),
+          ]),
+        ];
+
+        const result = getEligibleTabsForPruning({
+          editorLastAccess,
+          excludePatterns: [],
+          excludePinned: true,
+          excludeDirty: true,
+        });
+
+        // both untracked tabs should come before the tracked one
+        expect(result.tabs).toHaveLength(3);
+        expect(result.tabs[0].lastAccess).toBe(0);
+        expect(result.tabs[1].lastAccess).toBe(0);
+        expect(result.tabs[2].uri).toContain('tracked.ts');
+        expect(result.tabs[2].lastAccess).toBe(now - 1000);
+      });
+    });
   });
 });

@@ -14,6 +14,8 @@ describe('saveTrackedPids', () => {
   beforeEach(() => {
     resetMocks();
     jest.clearAllMocks();
+    // default mock for readFileSync (used by findsertVscodeGitignore)
+    mockFs.readFileSync.mockReturnValue('');
   });
 
   given('a workspace folder', () => {
@@ -93,8 +95,11 @@ describe('saveTrackedPids', () => {
         state.trackedPids.set('terraform.languageServer.enable', 12345);
 
         mockFs.existsSync.mockReturnValue(true);
-        mockFs.writeFileSync.mockImplementation(() => {
-          throw new Error('permission denied');
+        mockFs.writeFileSync.mockImplementation((path: string) => {
+          // only throw for the state file, not the gitignore
+          if (path.endsWith('bhouncer.state.json')) {
+            throw new Error('permission denied');
+          }
         });
 
         // should not throw
