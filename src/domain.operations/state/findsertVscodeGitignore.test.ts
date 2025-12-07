@@ -29,7 +29,7 @@ describe('findsertVscodeGitignore', () => {
 
         expect(mockFs.writeFile).toHaveBeenCalledWith(
           path.join(vscodeDir, '.gitignore'),
-          'bhouncer.state.json\nsettings.json\n',
+          '.gitignore\nbhouncer.state.json\nsettings.json\n',
           'utf8',
         );
       });
@@ -46,7 +46,7 @@ describe('findsertVscodeGitignore', () => {
 
         expect(mockFs.writeFile).toHaveBeenCalledWith(
           path.join(vscodeDir, '.gitignore'),
-          'other.txt\nbhouncer.state.json\nsettings.json\n',
+          'other.txt\n.gitignore\nbhouncer.state.json\nsettings.json\n',
           'utf8',
         );
       });
@@ -63,7 +63,7 @@ describe('findsertVscodeGitignore', () => {
 
         expect(mockFs.writeFile).toHaveBeenCalledWith(
           path.join(vscodeDir, '.gitignore'),
-          'other.json\nbhouncer.state.json\nsettings.json\n',
+          'other.json\n.gitignore\nbhouncer.state.json\nsettings.json\n',
           'utf8',
         );
       });
@@ -72,7 +72,7 @@ describe('findsertVscodeGitignore', () => {
     when('.gitignore already contains all entries', () => {
       beforeEach(() => {
         mockFs.readFile.mockResolvedValue(
-          'other.json\nbhouncer.state.json\nsettings.json\n',
+          '.gitignore\nother.json\nbhouncer.state.json\nsettings.json\n',
         );
         mockFs.writeFile.mockResolvedValue();
       });
@@ -90,12 +90,12 @@ describe('findsertVscodeGitignore', () => {
         mockFs.writeFile.mockResolvedValue();
       });
 
-      then('appends only missing settings.json', async () => {
+      then('appends only missing entries', async () => {
         await findsertVscodeGitignore({ vscodeDir });
 
         expect(mockFs.writeFile).toHaveBeenCalledWith(
           path.join(vscodeDir, '.gitignore'),
-          'bhouncer.state.json\nsettings.json\n',
+          'bhouncer.state.json\n.gitignore\nsettings.json\n',
           'utf8',
         );
       });
@@ -104,7 +104,7 @@ describe('findsertVscodeGitignore', () => {
     when('.gitignore contains entries with extra whitespace', () => {
       beforeEach(() => {
         mockFs.readFile.mockResolvedValue(
-          'other.json\n  bhouncer.state.json  \n  settings.json  \n',
+          '.gitignore\nother.json\n  bhouncer.state.json  \n  settings.json  \n',
         );
         mockFs.writeFile.mockResolvedValue();
       });

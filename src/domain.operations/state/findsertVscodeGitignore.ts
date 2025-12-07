@@ -9,7 +9,7 @@ export const findsertVscodeGitignore = async (input: {
   vscodeDir: string;
 }): Promise<void> => {
   const gitignorePath = path.join(input.vscodeDir, '.gitignore');
-  const entries = ['bhouncer.state.json', 'settings.json'];
+  const entries = ['.gitignore', 'bhouncer.state.json', 'settings.json'];
 
   // read existing gitignore if present
   const content = await fs
