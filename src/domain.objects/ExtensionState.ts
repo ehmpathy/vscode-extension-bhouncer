@@ -1,4 +1,5 @@
 import type { Output } from '../domain.operations/output/createOutput';
+import type { ServerKillRecord } from './ServerKillRecord';
 
 /**
  * .what = extension state container
@@ -16,6 +17,12 @@ export interface ExtensionState {
 
   /** output instance for logging */
   output: Output | undefined;
+
+  /** record of all server kills this session with resource proof */
+  killRecords: ServerKillRecord[];
+
+  /** cumulative memory freed this session in bytes */
+  totalMemoryFreedBytes: number;
 }
 
 /**
@@ -27,4 +34,6 @@ export const createExtensionState = (): ExtensionState => ({
   editorLastAccess: new Map(),
   pruneInterval: undefined,
   output: undefined,
+  killRecords: [],
+  totalMemoryFreedBytes: 0,
 });
