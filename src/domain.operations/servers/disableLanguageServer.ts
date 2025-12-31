@@ -7,6 +7,7 @@ import { formatMemoryBytes } from '../output/formatMemoryBytes';
 import { getProcessResources } from '../processes/getProcessResources';
 import { killPidSafely } from '../processes/killPidSafely';
 import { saveTrackedPids } from '../state/saveTrackedPids';
+import { getServerRegistryEntry } from './getServerRegistryEntry';
 
 /**
  * .what = disables a language server and kills its tracked pid
@@ -16,13 +17,13 @@ export const disableLanguageServer = async (
   input: { config: LanguageServerConfig },
   context: { state: ExtensionState },
 ): Promise<void> => {
-  const settings = vscode.workspace.getConfiguration();
+  const { config } = input;
+  const registry = getServerRegistryEntry({ config });
 
   // capture tracked pid before disabling
-  const pidBefore =
-    context.state.trackedPids.get(input.config.settingKey) ?? null;
+  const pidBefore = context.state.trackedPids.get(config.slug) ?? null;
   context.state.output?.debug('disableLanguageServer.input', {
-    key: input.config.settingKey,
+    slug: config.slug,
     pid: pidBefore,
   });
 
@@ -31,19 +32,15 @@ export const disableLanguageServer = async (
     ? getProcessResources({ pid: pidBefore })
     : null;
 
-  // disable the setting
-  await settings.update(
-    input.config.settingKey,
-    false,
-    vscode.ConfigurationTarget.Workspace,
-  );
+  // call onPrune hook to disable the server
+  await registry.onPrune({ vscode });
 
   // kill the tracked pid if present
   let killResult: 'killed' | 'already_exited' | 'not_tracked' = 'not_tracked';
   if (pidBefore) {
     const { killed } = killPidSafely({ pid: pidBefore });
     killResult = killed ? 'killed' : 'already_exited';
-    context.state.trackedPids.delete(input.config.settingKey);
+    context.state.trackedPids.delete(config.slug);
 
     // persist tracked pids to workspace state file
     saveTrackedPids(context);
@@ -51,7 +48,7 @@ export const disableLanguageServer = async (
 
   // log after state
   context.state.output?.debug('disableLanguageServer.output', {
-    key: input.config.settingKey,
+    slug: config.slug,
     pid: pidBefore,
     result: killResult,
   });
@@ -63,7 +60,7 @@ export const disableLanguageServer = async (
 
     // record for aggregate tracking
     const killRecord: ServerKillRecord = {
-      settingKey: input.config.settingKey,
+      slug: config.slug,
       pid: pidBefore,
       killedAt: new Date().toISOString(),
       resourcesBefore,
@@ -75,7 +72,7 @@ export const disableLanguageServer = async (
 
     // ✨ sparkle-labeled benefit output
     context.state.output?.info('✨ server.killed', {
-      key: input.config.settingKey,
+      slug: config.slug,
       pid: pidBefore,
       memoryFreed: formatMemoryBytes({ bytes: memoryFreed }),
       cpuFreed: `${cpuFreed.toFixed(1)}%`,

@@ -4,6 +4,7 @@ import type { ExtensionState } from '../../domain.objects/ExtensionState';
 import type { LanguageServerConfig } from '../../domain.objects/LanguageServerConfig';
 import { getPids } from '../processes/getPids';
 import { saveTrackedPids } from '../state/saveTrackedPids';
+import { getServerRegistryEntry } from './getServerRegistryEntry';
 
 /**
  * .what = enables a language server and tracks its spawned pid
@@ -13,35 +14,40 @@ export const enableLanguageServer = async (
   input: { config: LanguageServerConfig },
   context: { state: ExtensionState },
 ): Promise<void> => {
-  const settings = vscode.workspace.getConfiguration();
-  const currentValue = settings.get(input.config.settingKey);
+  const { config } = input;
+  const registry = getServerRegistryEntry({ config });
 
-  // skip if already enabled
-  if (currentValue === true) return;
+  // capture pids before starting
+  const pidsBefore = getPids({ pattern: config.processPattern });
 
-  // capture pids before enabling
-  const pidsBefore = getPids({ pattern: input.config.processPattern });
-  // context.state.output?.debug('enable language server', {
-  //   key: input.config.settingKey,
-  //   stage: 'before',
-  //   pids: [...pidsBefore],
-  // });
+  // skip if server already running and tracked
+  const trackedPid = context.state.trackedPids.get(config.slug);
+  if (trackedPid && pidsBefore.has(String(trackedPid))) {
+    return;
+  }
 
-  // enable the language server
-  await settings.update(input.config.settingKey, true, vscode.ConfigurationTarget.Workspace);
+  // call onStart hook to start the server
+  await registry.onStart({ vscode });
 
   // wait for server to spawn
   await new Promise((r) => setTimeout(r, 2000));
 
   // detect and track the new pid
-  const pidsAfter = getPids({ pattern: input.config.processPattern });
+  const pidsAfter = getPids({ pattern: config.processPattern });
   let pidTracked: string | null = null;
   for (const pid of pidsAfter) {
     if (!pidsBefore.has(pid)) {
-      context.state.trackedPids.set(input.config.settingKey, parseInt(pid));
+      context.state.trackedPids.set(config.slug, parseInt(pid));
       pidTracked = pid;
       break;
     }
+  }
+
+  // if no new pid found, track any existing pid (restart may reuse same process)
+  if (!pidTracked && pidsAfter.size > 0) {
+    const pidExisting = [...pidsAfter][0];
+    context.state.trackedPids.set(config.slug, parseInt(pidExisting));
+    pidTracked = pidExisting;
   }
 
   // persist tracked pids to workspace state file
@@ -49,9 +55,8 @@ export const enableLanguageServer = async (
     saveTrackedPids(context);
   }
 
-  // log after state
   context.state.output?.debug('enableLanguageServer.output', {
-    key: input.config.settingKey,
+    slug: config.slug,
     pid: pidTracked,
   });
 };

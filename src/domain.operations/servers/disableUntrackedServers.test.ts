@@ -13,13 +13,13 @@ describe('disableUntrackedServers', () => {
 
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
-    settingKey: 'terraform.languageServer.enable',
+    slug: 'terraform',
     processPattern: 'terraform-ls',
   };
 
   const eslintServer = {
     extensions: ['.js', '.ts'],
-    settingKey: 'eslint.enable',
+    slug: 'eslint',
     processPattern: 'eslintServer',
   };
 
@@ -40,8 +40,9 @@ describe('disableUntrackedServers', () => {
           { state },
         );
 
+        // onPrune hook updates 'enable' on scoped config
         expect(mockUpdate).toHaveBeenCalledWith(
-          'terraform.languageServer.enable',
+          'enable',
           false,
           2, // vscode.ConfigurationTarget.Workspace
         );
@@ -64,14 +65,10 @@ describe('disableUntrackedServers', () => {
           { state },
         );
 
+        // both onPrune hooks update 'enable' on their scoped configs
         expect(mockUpdate).toHaveBeenCalledTimes(2);
         expect(mockUpdate).toHaveBeenCalledWith(
-          'terraform.languageServer.enable',
-          false,
-          2, // vscode.ConfigurationTarget.Workspace
-        );
-        expect(mockUpdate).toHaveBeenCalledWith(
-          'eslint.enable',
+          'enable',
           false,
           2, // vscode.ConfigurationTarget.Workspace
         );

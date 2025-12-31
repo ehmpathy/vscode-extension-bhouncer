@@ -5,8 +5,8 @@ import type { ProcessResourceSnapshot } from './ProcessResourceSnapshot';
  * .why = enables audit trail and aggregate benefit calculation
  */
 export interface ServerKillRecord {
-  /** language server setting key (e.g., 'terraform.languageServer.enable') */
-  settingKey: string;
+  /** language server slug (e.g., 'terraform', 'typescript') */
+  slug: string;
 
   /** process id that was killed */
   pid: number;

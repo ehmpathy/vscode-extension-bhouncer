@@ -55,7 +55,7 @@ export const checkAndUpdateLanguageServers = (context: {
         detectLanguageServerState({ config: serverConfig }, context);
       } catch (error) {
         context.state.output?.warn('checkAndUpdateLanguageServers.error', {
-          key: serverConfig.settingKey,
+          slug: serverConfig.slug,
           reason: error instanceof Error ? error.message : String(error),
         });
       }

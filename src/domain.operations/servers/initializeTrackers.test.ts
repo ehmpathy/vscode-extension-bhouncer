@@ -26,7 +26,7 @@ describe('initializeTrackers', () => {
 
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
-    settingKey: 'terraform.languageServer.enable',
+    slug: 'terraform',
     processPattern: 'terraform-ls',
   };
 

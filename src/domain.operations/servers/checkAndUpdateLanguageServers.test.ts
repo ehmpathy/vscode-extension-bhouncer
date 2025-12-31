@@ -33,10 +33,17 @@ jest.mock('./disableLanguageServer', () => ({
   disableLanguageServer: jest.fn(),
 }));
 
+// mock getPids to control process detection
+jest.mock('../processes/getPids', () => ({
+  getPids: jest.fn(),
+}));
+
 import { enableLanguageServer } from './enableLanguageServer';
 import { disableLanguageServer } from './disableLanguageServer';
+import { getPids } from '../processes/getPids';
 const mockEnable = enableLanguageServer as jest.Mock;
 const mockDisable = disableLanguageServer as jest.Mock;
+const mockGetPids = getPids as jest.Mock;
 
 describe('checkAndUpdateLanguageServers', () => {
   beforeEach(() => {
@@ -46,13 +53,13 @@ describe('checkAndUpdateLanguageServers', () => {
 
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
-    settingKey: 'terraform.languageServer.enable',
+    slug: 'terraform',
     processPattern: 'terraform-ls',
   };
 
   const eslintServer = {
     extensions: ['.js', '.ts', '.tsx'],
-    settingKey: 'eslint.enable',
+    slug: 'eslint',
     processPattern: 'eslintServer',
   };
 
@@ -76,7 +83,7 @@ describe('checkAndUpdateLanguageServers', () => {
       });
     });
 
-    when('relevant files are open for a server that is currently disabled', () => {
+    when('relevant files are open for a server that is not running', () => {
       then('enables that server', async () => {
         const state = createExtensionState();
 
@@ -84,14 +91,15 @@ describe('checkAndUpdateLanguageServers', () => {
           get: jest.fn((key: string) => {
             if (key === 'enabled') return true;
             if (key === 'servers') return [terraformServer];
-            // server is currently disabled (detected=dead, desired=live)
-            if (key === 'terraform.languageServer.enable') return false;
             return undefined;
           }),
           update: jest.fn(),
         });
 
-        // terraform files are open
+        // server is not running (detected=dead)
+        mockGetPids.mockReturnValue(new Set());
+
+        // terraform files are open (desired=live)
         window.tabGroups.all = [
           createMockTabGroup([
             createMockTab({ fsPath: '/project/main.tf' }),
@@ -109,7 +117,7 @@ describe('checkAndUpdateLanguageServers', () => {
       });
     });
 
-    when('no relevant files are open for a server that is currently enabled', () => {
+    when('no relevant files are open for a server that is running', () => {
       then('disables that server', async () => {
         const state = createExtensionState();
 
@@ -117,14 +125,15 @@ describe('checkAndUpdateLanguageServers', () => {
           get: jest.fn((key: string) => {
             if (key === 'enabled') return true;
             if (key === 'servers') return [terraformServer];
-            // server is currently enabled (detected=live, desired=dead)
-            if (key === 'terraform.languageServer.enable') return true;
             return undefined;
           }),
           update: jest.fn(),
         });
 
-        // no terraform files open
+        // server is running (detected=live)
+        mockGetPids.mockReturnValue(new Set(['12345']));
+
+        // no terraform files open (desired=dead)
         window.tabGroups.all = [
           createMockTabGroup([
             createMockTab({ fsPath: '/project/index.ts' }),
@@ -150,13 +159,16 @@ describe('checkAndUpdateLanguageServers', () => {
           get: jest.fn((key: string) => {
             if (key === 'enabled') return true;
             if (key === 'servers') return [terraformServer, eslintServer];
-            // terraform is enabled but no files open (detected=live, desired=dead)
-            if (key === 'terraform.languageServer.enable') return true;
-            // eslint is disabled but files are open (detected=dead, desired=live)
-            if (key === 'eslint.enable') return false;
             return undefined;
           }),
           update: jest.fn(),
+        });
+
+        // terraform is running, eslint is not
+        mockGetPids.mockImplementation(({ pattern }: { pattern: string }) => {
+          if (pattern === 'terraform-ls') return new Set(['12345']); // running
+          if (pattern === 'eslintServer') return new Set(); // not running
+          return new Set();
         });
 
         // only typescript files open (eslint needed, terraform not)
@@ -169,7 +181,7 @@ describe('checkAndUpdateLanguageServers', () => {
 
         await checkAndUpdateLanguageServers({ state });
 
-        // terraform disabled, eslint enabled
+        // terraform disabled (running but no files), eslint enabled (not running but files open)
         expect(mockDisable).toHaveBeenCalledWith(
           { config: terraformServer },
           { state },
@@ -181,7 +193,7 @@ describe('checkAndUpdateLanguageServers', () => {
       });
     });
 
-    when('no tabs are open and all servers are currently enabled', () => {
+    when('no tabs are open and all servers are currently running', () => {
       then('disables all servers', async () => {
         const state = createExtensionState();
 
@@ -189,13 +201,13 @@ describe('checkAndUpdateLanguageServers', () => {
           get: jest.fn((key: string) => {
             if (key === 'enabled') return true;
             if (key === 'servers') return [terraformServer, eslintServer];
-            // both servers currently enabled (detected=live, desired=dead)
-            if (key === 'terraform.languageServer.enable') return true;
-            if (key === 'eslint.enable') return true;
             return undefined;
           }),
           update: jest.fn(),
         });
+
+        // both servers running
+        mockGetPids.mockReturnValue(new Set(['12345']));
 
         window.tabGroups.all = [];
 
@@ -214,19 +226,20 @@ describe('checkAndUpdateLanguageServers', () => {
           get: jest.fn((key: string) => {
             if (key === 'enabled') return true;
             if (key === 'servers') return [terraformServer];
-            // server is disabled and no files open (detected=dead, desired=dead)
-            if (key === 'terraform.languageServer.enable') return false;
             return undefined;
           }),
           update: jest.fn(),
         });
 
-        // no terraform files open
+        // server is not running (detected=dead)
+        mockGetPids.mockReturnValue(new Set());
+
+        // no terraform files open (desired=dead)
         window.tabGroups.all = [];
 
         await checkAndUpdateLanguageServers({ state });
 
-        // no action taken since already in desired state
+        // no action taken since already in desired state (dead=dead)
         expect(mockDisable).not.toHaveBeenCalled();
         expect(mockEnable).not.toHaveBeenCalled();
       });

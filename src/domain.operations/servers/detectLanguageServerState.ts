@@ -1,8 +1,7 @@
-import * as vscode from 'vscode';
-
 import type { ExtensionState } from '../../domain.objects/ExtensionState';
 import type { LanguageServerConfig } from '../../domain.objects/LanguageServerConfig';
 import { getOpenEditorsByExtension } from '../editors/getOpenEditorsByExtension';
+import { getPids } from '../processes/getPids';
 
 /**
  * .what = detects and logs the current state of a language server
@@ -12,15 +11,16 @@ export const detectLanguageServerState = (
   input: { config: LanguageServerConfig },
   context: { state: ExtensionState },
 ): { desired: 'live' | 'dead'; detected: 'live' | 'dead' } => {
+  const { config } = input;
+
   // get editor counts for this server's extensions
   const editorCounts = getOpenEditorsByExtension({
-    extensions: input.config.extensions,
+    extensions: config.extensions,
   });
 
-  // determine current setting state
-  const settings = vscode.workspace.getConfiguration();
-  const currentValue = settings.get(input.config.settingKey);
-  const detected = currentValue === true ? 'live' : 'dead';
+  // determine current detected state by checking if process is running
+  const pids = getPids({ pattern: config.processPattern });
+  const detected = pids.size > 0 ? 'live' : 'dead';
 
   // determine desired state based on open editors
   const totalEditors = Object.values(editorCounts).reduce((a, b) => a + b, 0);
@@ -29,7 +29,7 @@ export const detectLanguageServerState = (
   // log when state change is needed
   if (desired !== detected) {
     context.state.output?.debug('detectLanguageServerState.output onDiff', {
-      key: input.config.settingKey,
+      slug: config.slug,
       desired,
       detected,
       editors: editorCounts,

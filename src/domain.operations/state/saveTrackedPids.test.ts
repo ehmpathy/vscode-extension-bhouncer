@@ -29,8 +29,8 @@ describe('saveTrackedPids', () => {
       then('writes them to state file', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
-        state.trackedPids.set('eslint.enable', 67890);
+        state.trackedPids.set('terraform', 12345);
+        state.trackedPids.set('eslint', 67890);
 
         mockFs.existsSync.mockReturnValue(true);
 
@@ -41,8 +41,8 @@ describe('saveTrackedPids', () => {
           JSON.stringify(
             {
               trackedPids: {
-                'terraform.languageServer.enable': 12345,
-                'eslint.enable': 67890,
+                'terraform': 12345,
+                'eslint': 67890,
               },
             },
             null,
@@ -57,7 +57,7 @@ describe('saveTrackedPids', () => {
       then('creates it before writing', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
 
         mockFs.existsSync.mockReturnValue(false);
 
@@ -92,7 +92,7 @@ describe('saveTrackedPids', () => {
       then('logs warning and does not crash', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
 
         mockFs.existsSync.mockReturnValue(true);
         mockFs.writeFileSync.mockImplementation((path: string) => {
@@ -113,7 +113,7 @@ describe('saveTrackedPids', () => {
       then('skips saving', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
 
         workspace.workspaceFolders = undefined;
 

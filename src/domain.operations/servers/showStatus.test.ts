@@ -15,8 +15,8 @@ describe('showStatus', () => {
         const state = createExtensionState();
         state.editorLastAccess.set('file:///project/a.ts', Date.now());
         state.editorLastAccess.set('file:///project/b.ts', Date.now());
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
-        state.trackedPids.set('eslint.enable', 67890);
+        state.trackedPids.set('terraform', 12345);
+        state.trackedPids.set('eslint', 67890);
 
         workspace.getConfiguration.mockReturnValue({
           get: jest.fn((key: string) => {
@@ -41,11 +41,11 @@ describe('showStatus', () => {
           expect.anything(),
         );
         expect(window.showInformationMessage).toHaveBeenCalledWith(
-          expect.stringContaining('terraform.languageServer.enable: 12345'),
+          expect.stringContaining('terraform: 12345'),
           expect.anything(),
         );
         expect(window.showInformationMessage).toHaveBeenCalledWith(
-          expect.stringContaining('eslint.enable: 67890'),
+          expect.stringContaining('eslint: 67890'),
           expect.anything(),
         );
       });
@@ -103,7 +103,7 @@ describe('showStatus', () => {
 
         // add kill records
         state.killRecords.push({
-          settingKey: 'terraform.languageServer.enable',
+          slug: 'terraform',
           pid: 12345,
           killedAt: '2025-01-01T00:00:00.000Z',
           resourcesBefore: {
@@ -116,7 +116,7 @@ describe('showStatus', () => {
           cpuFreedPercent: 2.5,
         });
         state.killRecords.push({
-          settingKey: 'eslint.enable',
+          slug: 'eslint',
           pid: 67890,
           killedAt: '2025-01-01T00:01:00.000Z',
           resourcesBefore: {

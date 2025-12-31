@@ -43,14 +43,14 @@ describe('proveBenefit', () => {
   });
 
   const terraformConfig: LanguageServerConfig = {
+    slug: 'terraform',
     extensions: ['.tf', '.tfvars'],
-    settingKey: 'terraform.languageServer.enable',
     processPattern: 'terraform-ls',
   };
 
   const eslintConfig: LanguageServerConfig = {
+    slug: 'eslint',
     extensions: ['.js', '.ts', '.tsx'],
-    settingKey: 'eslint.enable',
     processPattern: 'eslint',
   };
 
@@ -60,7 +60,7 @@ describe('proveBenefit', () => {
         const mockInfo = jest.fn();
         const mockDebug = jest.fn();
         const state = createExtensionState();
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
         state.output = { info: mockInfo, debug: mockDebug } as never;
 
         workspace.getConfiguration.mockReturnValue({
@@ -85,7 +85,7 @@ describe('proveBenefit', () => {
         expect(mockInfo).toHaveBeenCalledWith(
           '✨ server.killed',
           expect.objectContaining({
-            key: 'terraform.languageServer.enable',
+            slug: 'terraform',
             pid: 12345,
             memoryFreed: '150.00 MB',
             cpuFreed: '3.5%',
@@ -97,7 +97,7 @@ describe('proveBenefit', () => {
         const mockInfo = jest.fn();
         const mockDebug = jest.fn();
         const state = createExtensionState();
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
         state.output = { info: mockInfo, debug: mockDebug } as never;
 
         workspace.getConfiguration.mockReturnValue({
@@ -148,7 +148,7 @@ describe('proveBenefit', () => {
         });
 
         // simulate first server kill
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
         mockGetProcessResources.mockReturnValue({
           pid: 12345,
           memoryBytes: 157286400, // 150 MB
@@ -159,7 +159,7 @@ describe('proveBenefit', () => {
         await disableLanguageServer({ config: terraformConfig }, { state });
 
         // simulate second server kill
-        state.trackedPids.set('eslint.enable', 67890);
+        state.trackedPids.set('eslint', 67890);
         mockGetProcessResources.mockReturnValue({
           pid: 67890,
           memoryBytes: 52428800, // 50 MB
@@ -198,7 +198,7 @@ describe('proveBenefit', () => {
         const mockInfo = jest.fn();
         const mockDebug = jest.fn();
         const state = createExtensionState();
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
         state.output = { info: mockInfo, debug: mockDebug } as never;
 
         workspace.getConfiguration.mockReturnValue({
