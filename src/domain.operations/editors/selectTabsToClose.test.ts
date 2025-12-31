@@ -1,5 +1,6 @@
 import { given, when, then } from 'test-fns';
 
+import type { BouncePolicy } from '../../domain.objects/BouncePolicy';
 import type { EditorTabInfo } from '../../domain.objects/EditorTabInfo';
 import { selectTabsToClose } from './selectTabsToClose';
 
@@ -186,6 +187,186 @@ describe('selectTabsToClose', () => {
         // idle tab is closed even though under limit
         expect(result).toHaveLength(1);
         expect(result[0]).toBe(tabs[1].tab);
+      });
+    });
+  });
+
+  given('bounceOnByExtension policy is configured', () => {
+    when('policy is TABS_LIMIT for .md files', () => {
+      const bounceOnByExtension: Record<string, BouncePolicy> = {
+        '.md': 'TABS_LIMIT',
+      };
+
+      then('.md file is NOT closed when idle but under tabs limit', () => {
+        const now = Date.now();
+        const tabs = [
+          createTabInfo('file:///docs/readme.md', now - 120000), // idle but should NOT close
+          createTabInfo('file:///src/index.ts', now - 1000), // recent
+        ];
+
+        const result = selectTabsToClose({
+          tabs,
+          maxOpen: 10,
+          idleTimeoutMs: 60000,
+          now,
+          bounceOnByExtension,
+        });
+
+        // .md file stays open despite being idle (TABS_LIMIT policy)
+        expect(result).toHaveLength(0);
+      });
+
+      then('.md file IS closed when over tabs limit', () => {
+        const now = Date.now();
+        const tabs = [
+          createTabInfo('file:///src/index.ts', now - 1000),
+          createTabInfo('file:///src/other.ts', now - 2000),
+          createTabInfo('file:///docs/readme.md', now - 3000), // over limit
+        ];
+
+        const result = selectTabsToClose({
+          tabs,
+          maxOpen: 2,
+          idleTimeoutMs: 600000, // none idle
+          now,
+          bounceOnByExtension,
+        });
+
+        // .md file closes because over limit
+        expect(result).toHaveLength(1);
+        expect(result[0]).toBe(tabs[2].tab);
+      });
+    });
+
+    when('policy is IDLE_LIMIT for .ts files', () => {
+      const bounceOnByExtension: Record<string, BouncePolicy> = {
+        '.ts': 'IDLE_LIMIT',
+      };
+
+      then('.ts file is NOT closed when over limit but not idle', () => {
+        const now = Date.now();
+        const tabs = [
+          createTabInfo('file:///src/a.ts', now - 1000),
+          createTabInfo('file:///src/b.ts', now - 2000),
+          createTabInfo('file:///src/c.ts', now - 3000), // over limit but not idle
+        ];
+
+        const result = selectTabsToClose({
+          tabs,
+          maxOpen: 2,
+          idleTimeoutMs: 60000, // 60s - none are idle
+          now,
+          bounceOnByExtension,
+        });
+
+        // .ts files stay open despite being over limit (IDLE_LIMIT policy)
+        expect(result).toHaveLength(0);
+      });
+
+      then('.ts file IS closed when idle', () => {
+        const now = Date.now();
+        const tabs = [
+          createTabInfo('file:///src/recent.ts', now - 1000),
+          createTabInfo('file:///src/idle.ts', now - 120000), // idle
+        ];
+
+        const result = selectTabsToClose({
+          tabs,
+          maxOpen: 10,
+          idleTimeoutMs: 60000,
+          now,
+          bounceOnByExtension,
+        });
+
+        // idle .ts file closes
+        expect(result).toHaveLength(1);
+        expect(result[0]).toBe(tabs[1].tab);
+      });
+    });
+
+    when('policy is BOTH (default) for unconfigured extensions', () => {
+      const bounceOnByExtension: Record<string, BouncePolicy> = {
+        '.md': 'TABS_LIMIT',
+      };
+
+      then('.js file closes on idle (default BOTH policy)', () => {
+        const now = Date.now();
+        const tabs = [
+          createTabInfo('file:///src/index.js', now - 120000), // idle, unconfigured ext
+        ];
+
+        const result = selectTabsToClose({
+          tabs,
+          maxOpen: 10,
+          idleTimeoutMs: 60000,
+          now,
+          bounceOnByExtension,
+        });
+
+        // .js uses default BOTH, closes on idle
+        expect(result).toHaveLength(1);
+      });
+
+      then('.js file closes on over limit (default BOTH policy)', () => {
+        const now = Date.now();
+        const tabs = [
+          createTabInfo('file:///src/a.js', now - 1000),
+          createTabInfo('file:///src/b.js', now - 2000),
+          createTabInfo('file:///src/c.js', now - 3000), // over limit
+        ];
+
+        const result = selectTabsToClose({
+          tabs,
+          maxOpen: 2,
+          idleTimeoutMs: 600000,
+          now,
+          bounceOnByExtension,
+        });
+
+        // .js uses default BOTH, closes on over limit
+        expect(result).toHaveLength(1);
+      });
+    });
+
+    when('bounceOnByExtension is empty', () => {
+      then('all tabs use BOTH policy (backwards compatible)', () => {
+        const now = Date.now();
+        const tabs = [
+          createTabInfo('file:///docs/readme.md', now - 120000), // idle
+          createTabInfo('file:///src/index.ts', now - 1000),
+        ];
+
+        const result = selectTabsToClose({
+          tabs,
+          maxOpen: 10,
+          idleTimeoutMs: 60000,
+          now,
+          bounceOnByExtension: {},
+        });
+
+        // .md closes on idle with empty config (BOTH default)
+        expect(result).toHaveLength(1);
+        expect(result[0]).toBe(tabs[0].tab);
+      });
+    });
+
+    when('bounceOnByExtension is not provided', () => {
+      then('all tabs use BOTH policy (backwards compatible)', () => {
+        const now = Date.now();
+        const tabs = [
+          createTabInfo('file:///docs/readme.md', now - 120000), // idle
+        ];
+
+        const result = selectTabsToClose({
+          tabs,
+          maxOpen: 10,
+          idleTimeoutMs: 60000,
+          now,
+          // bounceOnByExtension not provided
+        });
+
+        // .md closes on idle without config (BOTH default)
+        expect(result).toHaveLength(1);
       });
     });
   });
