@@ -14,6 +14,7 @@ export const resetMocks = (): void => {
   window.showWarningMessage.mockClear();
   window.createOutputChannel.mockClear();
   workspace.getConfiguration.mockClear();
+  workspace.onDidChangeTextDocument.mockClear();
   commands.registerCommand.mockClear();
   commands.executeCommand.mockClear();
 };
@@ -43,6 +44,7 @@ export const workspace = {
   workspaceFolders: [
     { uri: { fsPath: '/mock/workspace' }, name: 'workspace', index: 0 },
   ],
+  onDidChangeTextDocument: jest.fn(() => ({ dispose: jest.fn() })),
 };
 
 export const commands = {

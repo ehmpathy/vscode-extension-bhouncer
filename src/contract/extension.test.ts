@@ -4,6 +4,7 @@ import {
   commands,
   resetMocks,
   window,
+  workspace,
 } from '../.test/mocks/vscode';
 import { activate, deactivate } from './extension';
 
@@ -52,6 +53,9 @@ describe('extension', () => {
 
         // should register activeTextEditor listener
         expect(window.onDidChangeActiveTextEditor).toHaveBeenCalled();
+
+        // should register document change listener for keystroke tracking
+        expect(workspace.onDidChangeTextDocument).toHaveBeenCalled();
 
         // should register tab change listener
         expect(window.tabGroups.onDidChangeTabs).toHaveBeenCalled();

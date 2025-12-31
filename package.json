@@ -48,6 +48,14 @@
           "default": true,
           "description": "Never auto-close tabs with unsaved changes"
         },
+        "bhouncer.editors.bounceOnByExtension": {
+          "type": "object",
+          "default": {
+            ".md": "TABS_LIMIT",
+            ".markdown": "TABS_LIMIT"
+          },
+          "description": "Per-extension closure policy: IDLE_LIMIT (close on timeout only), TABS_LIMIT (close on LRU overflow only), BOTH (either condition). Default: .md/.markdown use TABS_LIMIT, others use BOTH."
+        },
         "bhouncer.servers": {
           "type": "array",
           "default": [

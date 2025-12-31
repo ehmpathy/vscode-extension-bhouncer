@@ -48,6 +48,16 @@ export const activate = (vsContext: vscode.ExtensionContext): void => {
     }),
   );
 
+  // track editor activity on document changes (keystrokes)
+  vsContext.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      // only track user-initiated changes (not external/terminal edits)
+      if (event.contentChanges.length > 0) {
+        state.editorLastAccess.set(event.document.uri.toString(), Date.now());
+      }
+    }),
+  );
+
   // check language servers and prune editors on tab changes
   vsContext.subscriptions.push(
     vscode.window.tabGroups.onDidChangeTabs((event) => {

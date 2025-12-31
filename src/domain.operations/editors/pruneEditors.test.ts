@@ -112,13 +112,14 @@ describe('pruneEditors', () => {
         ); // 20 min ago
 
         workspace.getConfiguration.mockReturnValue({
-          get: jest.fn((key: string) => {
+          get: jest.fn((key: string, defaultValue?: unknown) => {
             if (key === 'enabled') return true;
             if (key === 'editors.maxOpen') return 2; // only keep 2
             if (key === 'editors.idleTimeoutMinutes') return 10; // 10 min idle timeout
             if (key === 'editors.excludePatterns') return [];
             if (key === 'editors.excludePinned') return true;
             if (key === 'editors.excludeDirty') return true;
+            if (key === 'editors.bounceOnByExtension') return defaultValue;
             return undefined;
           }),
           update: jest.fn(),
@@ -143,7 +144,7 @@ describe('pruneEditors', () => {
     });
 
     when('tabs are over limit but not idle', () => {
-      then('closes tabs over limit (OR logic)', async () => {
+      then('closes tabs over limit (OR logic for BOTH policy)', async () => {
         const now = Date.now();
         const state = createExtensionState();
 
@@ -153,13 +154,14 @@ describe('pruneEditors', () => {
         state.editorLastAccess.set('file:///project/c.ts', now - 3000);
 
         workspace.getConfiguration.mockReturnValue({
-          get: jest.fn((key: string) => {
+          get: jest.fn((key: string, defaultValue?: unknown) => {
             if (key === 'enabled') return true;
             if (key === 'editors.maxOpen') return 2;
             if (key === 'editors.idleTimeoutMinutes') return 10;
             if (key === 'editors.excludePatterns') return [];
             if (key === 'editors.excludePinned') return true;
             if (key === 'editors.excludeDirty') return true;
+            if (key === 'editors.bounceOnByExtension') return defaultValue;
             return undefined;
           }),
           update: jest.fn(),
@@ -175,7 +177,7 @@ describe('pruneEditors', () => {
 
         await pruneEditors({ state });
 
-        // c.ts is over limit, so it gets closed
+        // c.ts is over limit, so it gets closed (BOTH policy for .ts files)
         expect(window.tabGroups.close).toHaveBeenCalledTimes(1);
         const closedTabs = (window.tabGroups.close as jest.Mock).mock.calls[0][0];
         expect(closedTabs).toHaveLength(1);
@@ -183,7 +185,7 @@ describe('pruneEditors', () => {
     });
 
     when('tabs are idle but within maxOpen limit', () => {
-      then('closes idle tabs (OR logic)', async () => {
+      then('closes idle tabs (OR logic for BOTH policy)', async () => {
         const now = Date.now();
         const state = createExtensionState();
 
@@ -198,13 +200,14 @@ describe('pruneEditors', () => {
         );
 
         workspace.getConfiguration.mockReturnValue({
-          get: jest.fn((key: string) => {
+          get: jest.fn((key: string, defaultValue?: unknown) => {
             if (key === 'enabled') return true;
             if (key === 'editors.maxOpen') return 10;
             if (key === 'editors.idleTimeoutMinutes') return 10;
             if (key === 'editors.excludePatterns') return [];
             if (key === 'editors.excludePinned') return true;
             if (key === 'editors.excludeDirty') return true;
+            if (key === 'editors.bounceOnByExtension') return defaultValue;
             return undefined;
           }),
           update: jest.fn(),
@@ -219,7 +222,7 @@ describe('pruneEditors', () => {
 
         await pruneEditors({ state });
 
-        // both are idle so both get closed
+        // .ts files use BOTH policy (default), so both idle tabs get closed
         expect(window.tabGroups.close).toHaveBeenCalledTimes(1);
         const closedTabs = (window.tabGroups.close as jest.Mock).mock.calls[0][0];
         expect(closedTabs).toHaveLength(2);
@@ -308,13 +311,14 @@ describe('pruneEditors', () => {
         );
 
         workspace.getConfiguration.mockReturnValue({
-          get: jest.fn((key: string) => {
+          get: jest.fn((key: string, defaultValue?: unknown) => {
             if (key === 'enabled') return true;
             if (key === 'editors.maxOpen') return 10;
             if (key === 'editors.idleTimeoutMinutes') return 10; // 10 min timeout
             if (key === 'editors.excludePatterns') return [];
             if (key === 'editors.excludePinned') return true;
             if (key === 'editors.excludeDirty') return true;
+            if (key === 'editors.bounceOnByExtension') return defaultValue;
             return undefined;
           }),
           update: jest.fn(),
@@ -335,6 +339,123 @@ describe('pruneEditors', () => {
         expect(window.tabGroups.close).toHaveBeenCalledTimes(1);
         // ^^^ This assertion shows the DEFECT behavior
         // When fixed, we should change to: expect(window.tabGroups.close).not.toHaveBeenCalled();
+      });
+    });
+
+    when('bounceOnByExtension config is set for .md files', () => {
+      then('.md file is NOT closed when idle but under tabs limit', async () => {
+        const now = Date.now();
+        const state = createExtensionState();
+
+        // .md file is idle
+        state.editorLastAccess.set(
+          'file:///docs/readme.md',
+          now - 15 * 60 * 1000,
+        ); // 15 min ago
+
+        workspace.getConfiguration.mockReturnValue({
+          get: jest.fn((key: string) => {
+            if (key === 'enabled') return true;
+            if (key === 'editors.maxOpen') return 10;
+            if (key === 'editors.idleTimeoutMinutes') return 10;
+            if (key === 'editors.excludePatterns') return [];
+            if (key === 'editors.excludePinned') return true;
+            if (key === 'editors.excludeDirty') return true;
+            if (key === 'editors.bounceOnByExtension')
+              return { '.md': 'TABS_LIMIT' };
+            return undefined;
+          }),
+          update: jest.fn(),
+        });
+
+        window.tabGroups.all = [
+          createMockTabGroup([
+            createMockTab({ fsPath: '/docs/readme.md' }),
+          ]),
+        ];
+
+        await pruneEditors({ state });
+
+        // .md file stays open despite being idle (TABS_LIMIT policy)
+        expect(window.tabGroups.close).not.toHaveBeenCalled();
+      });
+
+      then('.md file IS closed when over tabs limit', async () => {
+        const now = Date.now();
+        const state = createExtensionState();
+
+        // all tabs are recent
+        state.editorLastAccess.set('file:///src/a.ts', now - 1000);
+        state.editorLastAccess.set('file:///src/b.ts', now - 2000);
+        state.editorLastAccess.set('file:///docs/readme.md', now - 3000);
+
+        workspace.getConfiguration.mockReturnValue({
+          get: jest.fn((key: string) => {
+            if (key === 'enabled') return true;
+            if (key === 'editors.maxOpen') return 2;
+            if (key === 'editors.idleTimeoutMinutes') return 10;
+            if (key === 'editors.excludePatterns') return [];
+            if (key === 'editors.excludePinned') return true;
+            if (key === 'editors.excludeDirty') return true;
+            if (key === 'editors.bounceOnByExtension')
+              return { '.md': 'TABS_LIMIT' };
+            return undefined;
+          }),
+          update: jest.fn(),
+        });
+
+        window.tabGroups.all = [
+          createMockTabGroup([
+            createMockTab({ fsPath: '/src/a.ts' }),
+            createMockTab({ fsPath: '/src/b.ts' }),
+            createMockTab({ fsPath: '/docs/readme.md' }),
+          ]),
+        ];
+
+        await pruneEditors({ state });
+
+        // .md file closes because over limit
+        expect(window.tabGroups.close).toHaveBeenCalledTimes(1);
+        const closedTabs = (window.tabGroups.close as jest.Mock).mock.calls[0][0];
+        expect(closedTabs).toHaveLength(1);
+      });
+    });
+
+    when('bounceOnByExtension uses default config', () => {
+      then('.md file stays open when idle (default TABS_LIMIT)', async () => {
+        const now = Date.now();
+        const state = createExtensionState();
+
+        // .md file is idle
+        state.editorLastAccess.set(
+          'file:///docs/readme.md',
+          now - 15 * 60 * 1000,
+        );
+
+        workspace.getConfiguration.mockReturnValue({
+          get: jest.fn((key: string, defaultValue?: unknown) => {
+            if (key === 'enabled') return true;
+            if (key === 'editors.maxOpen') return 10;
+            if (key === 'editors.idleTimeoutMinutes') return 10;
+            if (key === 'editors.excludePatterns') return [];
+            if (key === 'editors.excludePinned') return true;
+            if (key === 'editors.excludeDirty') return true;
+            if (key === 'editors.bounceOnByExtension') return defaultValue;
+            return undefined;
+          }),
+          update: jest.fn(),
+        });
+
+        window.tabGroups.all = [
+          createMockTabGroup([
+            createMockTab({ fsPath: '/docs/readme.md' }),
+          ]),
+        ];
+
+        await pruneEditors({ state });
+
+        // .md file stays open with default config (TABS_LIMIT)
+        expect(window.tabGroups.close).not.toHaveBeenCalled();
       });
     });
   });

@@ -1,8 +1,11 @@
 import Bottleneck from 'bottleneck';
 import * as vscode from 'vscode';
 
+import type { BouncePolicy } from '../../domain.objects/BouncePolicy';
 import type { ExtensionState } from '../../domain.objects/ExtensionState';
 import { checkAndUpdateLanguageServers } from '../servers/checkAndUpdateLanguageServers';
+import { getBouncePolicy } from './getBouncePolicy';
+import { getDefaultBounceConfig } from './getDefaultBounceConfig';
 import { getEligibleTabsForPruning } from './getEligibleTabsForPruning';
 import { selectTabsToClose } from './selectTabsToClose';
 
@@ -36,6 +39,10 @@ export const pruneEditors = (context: { state: ExtensionState }): Promise<void> 
     );
     const excludePinned = config.get<boolean>('editors.excludePinned', true);
     const excludeDirty = config.get<boolean>('editors.excludeDirty', true);
+    const bounceOnByExtension = config.get<Record<string, BouncePolicy>>(
+      'editors.bounceOnByExtension',
+      getDefaultBounceConfig(),
+    );
     const now = Date.now();
 
     // collect eligible tabs
@@ -52,22 +59,36 @@ export const pruneEditors = (context: { state: ExtensionState }): Promise<void> 
       maxOpen,
       idleTimeoutMs,
       now,
+      bounceOnByExtension,
     });
 
     // skip if no tabs to close
     if (tabsToClose.length === 0) return;
 
-    // build toClose with reasons inline
+    // build toClose with policy-aware reasons inline
     const toClose = tabs
       .map((t, i) => {
+        const policy = getBouncePolicy({
+          uri: t.uri,
+          config: bounceOnByExtension,
+        });
         const isOverLimit = i >= maxOpen;
         const isIdle =
           t.lastAccess > 0 && now - t.lastAccess > idleTimeoutMs;
-        if (!isOverLimit && !isIdle) return null;
+
+        // determine if tab should close based on policy
+        const shouldClose = (() => {
+          if (policy === 'IDLE_LIMIT') return isIdle;
+          if (policy === 'TABS_LIMIT') return isOverLimit;
+          return isOverLimit || isIdle; // BOTH
+        })();
+        if (!shouldClose) return null;
+
         return {
           path: t.uri,
           reason: isOverLimit ? 'lru' : 'idle',
           age: Math.round((now - t.lastAccess) / 1000),
+          policy,
         };
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
