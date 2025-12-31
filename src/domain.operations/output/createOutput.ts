@@ -41,11 +41,11 @@ export const createOutput = (input: {
 }): Output => {
   const config = createOutputConfig();
 
-  // initialize output channel if enabled
+  // initialize output channel if enabled (channel exists but is not auto-shown)
   if (input.enabled && input.createOutputChannel) {
     config.outputChannel = input.createOutputChannel('bhouncer');
-    // show the output channel so users can see logs immediately
-    config.outputChannel.show(true); // preserveFocus=true keeps editor focused
+    // note: intentionally NOT calling .show() to avoid stealing panel focus
+    // users can manually switch to output panel and select bhouncer from dropdown
   }
 
   // log writing helper
