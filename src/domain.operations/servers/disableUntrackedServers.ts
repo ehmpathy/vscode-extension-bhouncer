@@ -23,8 +23,8 @@ export const disableUntrackedServers = async (
       // call onPrune hook to disable the server
       await registry.onPrune({ vscode });
 
-      // kill all running processes for this server
-      const pids = getPids({ pattern: serverConfig.processPattern });
+      // kill all live processes for this server
+      const pids = getPids({ pattern: registry.processPattern });
       for (const pid of pids) {
         killPidSafely({ pid: parseInt(pid) });
       }

@@ -11,7 +11,7 @@ import { getServerRegistryEntry } from './getServerRegistryEntry';
 
 /**
  * .what = disables a language server and kills its tracked pid
- * .why = frees memory by stopping servers when their files are no longer open
+ * .why = frees memory via server stop when their files are no longer open
  */
 export const disableLanguageServer = async (
   input: { config: LanguageServerConfig },
@@ -20,33 +20,31 @@ export const disableLanguageServer = async (
   const { config } = input;
   const registry = getServerRegistryEntry({ config });
 
-  // capture tracked pid before disabling
-  const pidBefore = context.state.trackedPids.get(config.slug) ?? null;
+  // capture tracked pid before disable
+  const pidBefore = context.state.trackedPids.get(config.slug);
+
+  // failfast if no pid to kill
+  if (pidBefore === undefined) return;
+
   context.state.output?.debug('disableLanguageServer.input', {
     slug: config.slug,
     pid: pidBefore,
   });
 
   // capture resources BEFORE kill for benefit proof
-  const resourcesBefore = pidBefore
-    ? getProcessResources({ pid: pidBefore })
-    : null;
+  const resourcesBefore = getProcessResources({ pid: pidBefore });
 
   // call onPrune hook to disable the server
   await registry.onPrune({ vscode });
 
-  // kill the tracked pid if present
-  let killResult: 'killed' | 'already_exited' | 'not_tracked' = 'not_tracked';
-  if (pidBefore) {
-    const { killed } = killPidSafely({ pid: pidBefore });
-    killResult = killed ? 'killed' : 'already_exited';
-    context.state.trackedPids.delete(config.slug);
+  // kill the tracked pid
+  const { killed } = killPidSafely({ pid: pidBefore });
+  const killResult = killed ? 'killed' : 'already_exited';
+  context.state.trackedPids.delete(config.slug);
 
-    // persist tracked pids to workspace state file
-    saveTrackedPids(context);
-  }
+  // persist tracked pids to workspace state file
+  saveTrackedPids(context);
 
-  // log after state
   context.state.output?.debug('disableLanguageServer.output', {
     slug: config.slug,
     pid: pidBefore,
@@ -58,7 +56,7 @@ export const disableLanguageServer = async (
     const memoryFreed = resourcesBefore.memoryBytes;
     const cpuFreed = resourcesBefore.cpuPercent;
 
-    // record for aggregate tracking
+    // record for aggregate totals
     const killRecord: ServerKillRecord = {
       slug: config.slug,
       pid: pidBefore,

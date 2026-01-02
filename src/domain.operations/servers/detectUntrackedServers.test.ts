@@ -5,7 +5,7 @@ import { createExtensionState } from '../../domain.objects/ExtensionState';
 import { createOutput } from '../output/createOutput';
 import { detectUntrackedServers } from './detectUntrackedServers';
 
-// mock getPids to control which processes are "running"
+// mock getPids to control which processes are "live"
 jest.mock('../processes/getPids', () => ({
   getPids: jest.fn(),
 }));
@@ -22,17 +22,15 @@ describe('detectUntrackedServers', () => {
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
     slug: 'terraform',
-    processPattern: 'terraform-ls',
   };
 
   const eslintServer = {
     extensions: ['.js', '.ts'],
     slug: 'eslint',
-    processPattern: 'eslintServer',
   };
 
   given('configured language servers', () => {
-    when('no servers have running processes', () => {
+    when('no servers have live processes', () => {
       then('returns empty untracked list', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -53,7 +51,7 @@ describe('detectUntrackedServers', () => {
       });
     });
 
-    when('server has running process but is already tracked in memory', () => {
+    when('server has live process but is already tracked in memory', () => {
       then('returns empty untracked list', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -75,7 +73,7 @@ describe('detectUntrackedServers', () => {
       });
     });
 
-    when('server has running process that is not tracked in memory', () => {
+    when('server has live process that is not tracked in memory', () => {
       then('returns that server as untracked', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -88,7 +86,7 @@ describe('detectUntrackedServers', () => {
           }),
         }));
 
-        // process is running but not tracked in memory
+        // process is live but not tracked in memory
         mockGetPids.mockReturnValue(new Set(['99999']));
 
         const result = detectUntrackedServers({ state });
@@ -97,7 +95,7 @@ describe('detectUntrackedServers', () => {
       });
     });
 
-    when('server has running process with different pid than tracked', () => {
+    when('server has live process with different pid than tracked', () => {
       then('returns that server as untracked', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -120,7 +118,7 @@ describe('detectUntrackedServers', () => {
       });
     });
 
-    when('multiple servers with mixed tracking state', () => {
+    when('multiple servers with mixed track state', () => {
       then('returns only untracked servers', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -136,7 +134,7 @@ describe('detectUntrackedServers', () => {
 
         mockGetPids.mockImplementation(({ pattern }: { pattern: string }) => {
           if (pattern === 'terraform-ls') return new Set(['12345']);
-          if (pattern === 'eslintServer') return new Set(['88888']);
+          if (pattern === 'eslint') return new Set(['88888']);
           return new Set();
         });
 
@@ -162,7 +160,7 @@ describe('detectUntrackedServers', () => {
 
         mockGetPids.mockImplementation(({ pattern }: { pattern: string }) => {
           if (pattern === 'terraform-ls') return new Set(['12345']);
-          if (pattern === 'eslintServer') return new Set(['88888']);
+          if (pattern === 'eslint') return new Set(['88888']);
           return new Set();
         });
 

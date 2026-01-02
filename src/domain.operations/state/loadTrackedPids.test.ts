@@ -130,7 +130,7 @@ describe('loadTrackedPids', () => {
 
   given('no workspace folder', () => {
     when('loadTrackedPids is called', () => {
-      then('skips loading', () => {
+      then('skips load', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 

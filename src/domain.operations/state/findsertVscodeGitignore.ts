@@ -11,7 +11,7 @@ export const findsertVscodeGitignore = async (input: {
   const gitignorePath = path.join(input.vscodeDir, '.gitignore');
   const entries = ['.gitignore', 'bhouncer.state.json', 'settings.json'];
 
-  // read existing gitignore if present
+  // read current gitignore if present
   const content = await fs
     .readFile(gitignorePath, 'utf8')
     .catch((error: NodeJS.ErrnoException) => {
@@ -26,7 +26,7 @@ export const findsertVscodeGitignore = async (input: {
   );
   if (missingEntries.length === 0) return;
 
-  // append missing entries with newline handling
+  // append entries not yet present, with newline logic
   const needsNewline = content.length > 0 && !content.endsWith('\n');
   const updatedContent =
     content + (needsNewline ? '\n' : '') + missingEntries.join('\n') + '\n';

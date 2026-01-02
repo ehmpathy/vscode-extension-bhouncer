@@ -1,6 +1,6 @@
 /**
- * .what = checks if a process is still running by pid
- * .why = allows verifying persisted pids are still valid before tracking them
+ * .what = checks if a process is still live by pid
+ * .why = allows verify of persisted pids before we track them
  *
  * .note = uses signal 0 which checks existence without sending a real signal
  */

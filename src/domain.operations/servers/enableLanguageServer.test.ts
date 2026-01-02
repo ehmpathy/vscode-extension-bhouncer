@@ -28,11 +28,10 @@ describe('enableLanguageServer', () => {
   const terraformConfig: LanguageServerConfig = {
     slug: 'terraform',
     extensions: ['.tf', '.tfvars'],
-    processPattern: 'terraform-ls',
   };
 
   given('a language server configuration', () => {
-    when('server is already running and tracked', () => {
+    when('server is already live and tracked', () => {
       then('does not re-enable it', async () => {
         const state = createExtensionState();
         state.trackedPids.set('terraform', 12345);
@@ -43,17 +42,17 @@ describe('enableLanguageServer', () => {
           update: mockUpdate,
         });
 
-        // tracked pid is still running
+        // tracked pid is still live
         mockGetPids.mockReturnValue(new Set(['12345']));
 
         await enableLanguageServer({ config: terraformConfig }, { state });
 
-        // should not call onStart since already running and tracked
+        // should not call onStart since already live and tracked
         expect(mockUpdate).not.toHaveBeenCalled();
       });
     });
 
-    when('server is not running', () => {
+    when('server is not live', () => {
       then('enables it and tracks the new pid', async () => {
         const state = createExtensionState();
         const mockUpdate = jest.fn().mockResolvedValue(undefined);
@@ -63,8 +62,8 @@ describe('enableLanguageServer', () => {
           update: mockUpdate,
         });
 
-        // before enabling: no pids
-        // after enabling: one new pid spawned
+        // before enable: no pids
+        // after enable: one new pid spawned
         mockGetPids
           .mockReturnValueOnce(new Set<string>()) // before
           .mockReturnValueOnce(new Set(['12345'])); // after
@@ -83,8 +82,8 @@ describe('enableLanguageServer', () => {
       });
     });
 
-    when('server restarts but reuses existing pid', () => {
-      then('tracks the existing pid for management', async () => {
+    when('server restarts but reuses prior pid', () => {
+      then('tracks the prior pid for management', async () => {
         const state = createExtensionState();
         const mockUpdate = jest.fn().mockResolvedValue(undefined);
 
@@ -102,12 +101,12 @@ describe('enableLanguageServer', () => {
 
         // onStart hook is called
         expect(mockUpdate).toHaveBeenCalled();
-        // existing pid is tracked (restart may reuse same process)
+        // prior pid is tracked (restart may reuse same process)
         expect(state.trackedPids.get('terraform')).toBe(99999);
       });
     });
 
-    when('existing pid already running and new pid spawns', () => {
+    when('prior pid already live and new pid spawns', () => {
       then('only tracks the new pid (the one not in before)', async () => {
         const state = createExtensionState();
         const mockUpdate = jest.fn().mockResolvedValue(undefined);
@@ -130,7 +129,7 @@ describe('enableLanguageServer', () => {
       });
     });
 
-    when('tracked pid is no longer running', () => {
+    when('tracked pid is no longer live', () => {
       then('restarts the server and tracks new pid', async () => {
         const state = createExtensionState();
         state.trackedPids.set('terraform', 12345); // tracked but dead
@@ -141,9 +140,9 @@ describe('enableLanguageServer', () => {
           update: mockUpdate,
         });
 
-        // tracked pid 12345 is not running, new pid 67890 spawns after
+        // tracked pid 12345 is not live, new pid 67890 spawns after
         mockGetPids
-          .mockReturnValueOnce(new Set<string>()) // before (12345 not running)
+          .mockReturnValueOnce(new Set<string>()) // before (12345 not live)
           .mockReturnValueOnce(new Set(['67890'])); // after
 
         await enableLanguageServer({ config: terraformConfig }, { state });
@@ -165,10 +164,9 @@ describe('enableLanguageServer', () => {
     const typescriptConfig: LanguageServerConfig = {
       slug: 'typescript',
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
-      processPattern: 'tsserver',
     };
 
-    when('server is not running', () => {
+    when('server is not live', () => {
       then('calls typescript.restartTsServer command and tracks pid', async () => {
         const state = createExtensionState();
         const mockUpdate = jest.fn().mockResolvedValue(undefined);
@@ -178,7 +176,7 @@ describe('enableLanguageServer', () => {
           update: mockUpdate,
         });
 
-        // before: no tsserver running
+        // before: no tsserver live
         // after: tsserver spawned
         mockGetPids
           .mockReturnValueOnce(new Set<string>())
@@ -199,7 +197,7 @@ describe('enableLanguageServer', () => {
       });
     });
 
-    when('server is already running and tracked', () => {
+    when('server is already live and tracked', () => {
       then('does not restart the server', async () => {
         const state = createExtensionState();
         state.trackedPids.set('typescript', 54321);
@@ -209,7 +207,7 @@ describe('enableLanguageServer', () => {
           update: jest.fn(),
         });
 
-        // tracked pid is running
+        // tracked pid is live
         mockGetPids.mockReturnValue(new Set(['54321']));
 
         await enableLanguageServer({ config: typescriptConfig }, { state });

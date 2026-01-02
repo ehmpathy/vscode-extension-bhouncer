@@ -54,7 +54,7 @@ describe('extension', () => {
         // should register activeTextEditor listener
         expect(window.onDidChangeActiveTextEditor).toHaveBeenCalled();
 
-        // should register document change listener for keystroke tracking
+        // should register document change listener for keystroke records
         expect(workspace.onDidChangeTextDocument).toHaveBeenCalled();
 
         // should register tab change listener

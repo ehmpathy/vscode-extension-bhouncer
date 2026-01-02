@@ -27,16 +27,15 @@ describe('detectLanguageServerState', () => {
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
     slug: 'terraform',
-    processPattern: 'terraform-ls',
   };
 
   given('a language server config', () => {
-    when('relevant files are open and server process is running', () => {
+    when('relevant files are open and server process is live', () => {
       then('returns desired=live, detected=live', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 
-        // process is running
+        // process is live
         mockGetPids.mockReturnValue(new Set(['12345']));
 
         window.tabGroups.all = [
@@ -54,12 +53,12 @@ describe('detectLanguageServerState', () => {
       });
     });
 
-    when('relevant files are open but server process is not running', () => {
+    when('relevant files are open but server process is not live', () => {
       then('returns desired=live, detected=dead', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 
-        // process is not running
+        // process is not live
         mockGetPids.mockReturnValue(new Set());
 
         window.tabGroups.all = [
@@ -77,12 +76,12 @@ describe('detectLanguageServerState', () => {
       });
     });
 
-    when('no relevant files are open and server process is running', () => {
+    when('no relevant files are open and server process is live', () => {
       then('returns desired=dead, detected=live', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 
-        // process is running
+        // process is live
         mockGetPids.mockReturnValue(new Set(['12345']));
 
         window.tabGroups.all = [
@@ -100,12 +99,12 @@ describe('detectLanguageServerState', () => {
       });
     });
 
-    when('no relevant files are open and server process is not running', () => {
+    when('no relevant files are open and server process is not live', () => {
       then('returns desired=dead, detected=dead', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 
-        // process is not running
+        // process is not live
         mockGetPids.mockReturnValue(new Set());
 
         window.tabGroups.all = [];

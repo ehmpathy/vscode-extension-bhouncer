@@ -59,44 +59,13 @@
         "bhouncer.servers": {
           "type": "array",
           "default": [
-            {
-              "extensions": [
-                ".tf",
-                ".tfvars"
-              ],
-              "settingKey": "terraform.languageServer.enable",
-              "processPattern": "terraform-ls"
-            },
-            {
-              "extensions": [
-                ".js",
-                ".jsx",
-                ".ts",
-                ".tsx",
-                ".mjs",
-                ".cjs"
-              ],
-              "settingKey": "eslint.enable",
-              "processPattern": "eslintServer"
-            },
-            {
-              "extensions": [
-                ".yaml",
-                ".yml"
-              ],
-              "settingKey": "yaml.validate",
-              "processPattern": "yaml-language-server"
-            },
-            {
-              "extensions": [
-                ".md",
-                ".markdown"
-              ],
-              "settingKey": "cSpell.enabled",
-              "processPattern": "code-spell-checker"
-            }
+            { "slug": "terraform", "extensions": [".tf", ".tfvars"] },
+            { "slug": "typescript", "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"] },
+            { "slug": "eslint", "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"] },
+            { "slug": "yaml", "extensions": [".yaml", ".yml"] },
+            { "slug": "cspell", "extensions": [".md", ".markdown"] }
           ],
-          "description": "Language servers to manage. Each entry needs: extensions (array), settingKey (string), processPattern (string)"
+          "description": "Language servers to manage. Each entry needs: slug (string matching a registry key), extensions (array of file extensions)"
         },
         "bhouncer.enabled": {
           "type": "boolean",

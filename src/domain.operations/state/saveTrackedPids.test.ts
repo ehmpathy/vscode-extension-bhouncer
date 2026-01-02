@@ -54,7 +54,7 @@ describe('saveTrackedPids', () => {
     });
 
     when('.vscode directory does not exist', () => {
-      then('creates it before writing', () => {
+      then('creates it before write', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
         state.trackedPids.set('terraform', 12345);
@@ -110,7 +110,7 @@ describe('saveTrackedPids', () => {
 
   given('no workspace folder', () => {
     when('saveTrackedPids is called', () => {
-      then('skips saving', () => {
+      then('skips save', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
         state.trackedPids.set('terraform', 12345);

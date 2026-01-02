@@ -8,7 +8,7 @@ import { getServerRegistryEntry } from './getServerRegistryEntry';
 
 /**
  * .what = enables a language server and tracks its spawned pid
- * .why = implements lazy-load pattern by enabling servers only when needed
+ * .why = implements lazy-load pattern via on-demand server start
  */
 export const enableLanguageServer = async (
   input: { config: LanguageServerConfig },
@@ -17,10 +17,10 @@ export const enableLanguageServer = async (
   const { config } = input;
   const registry = getServerRegistryEntry({ config });
 
-  // capture pids before starting
-  const pidsBefore = getPids({ pattern: config.processPattern });
+  // capture pids before start
+  const pidsBefore = getPids({ pattern: registry.processPattern });
 
-  // skip if server already running and tracked
+  // skip if server already live and tracked
   const trackedPid = context.state.trackedPids.get(config.slug);
   if (trackedPid && pidsBefore.has(String(trackedPid))) {
     return;
@@ -33,7 +33,7 @@ export const enableLanguageServer = async (
   await new Promise((r) => setTimeout(r, 2000));
 
   // detect and track the new pid
-  const pidsAfter = getPids({ pattern: config.processPattern });
+  const pidsAfter = getPids({ pattern: registry.processPattern });
   let pidTracked: string | null = null;
   for (const pid of pidsAfter) {
     if (!pidsBefore.has(pid)) {
@@ -43,11 +43,11 @@ export const enableLanguageServer = async (
     }
   }
 
-  // if no new pid found, track any existing pid (restart may reuse same process)
+  // if no new pid found, track any current pid (restart may reuse same process)
   if (!pidTracked && pidsAfter.size > 0) {
-    const pidExisting = [...pidsAfter][0];
-    context.state.trackedPids.set(config.slug, parseInt(pidExisting));
-    pidTracked = pidExisting;
+    const pidCurrent = [...pidsAfter][0];
+    context.state.trackedPids.set(config.slug, parseInt(pidCurrent));
+    pidTracked = pidCurrent;
   }
 
   // persist tracked pids to workspace state file

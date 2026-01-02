@@ -6,8 +6,8 @@ import { LANGUAGE_SERVER_REGISTRY } from '../../domain.objects/LanguageServerReg
 import { getPids } from '../processes/getPids';
 
 /**
- * .what = detects running language servers that bhouncer is not tracking
- * .why = on activation, existing servers need to be disabled so bhouncer can manage them cleanly
+ * .what = detects live language servers that bhouncer has not tracked
+ * .why = on activation, prior servers need to be disabled so bhouncer can manage them cleanly
  */
 export const detectUntrackedServers = (context: {
   state: ExtensionState;
@@ -26,15 +26,15 @@ export const detectUntrackedServers = (context: {
     const registry = LANGUAGE_SERVER_REGISTRY[serverConfig.slug];
     if (!registry) continue; // skip unknown servers
 
-    // check if server has running processes
-    const pids = getPids({ pattern: serverConfig.processPattern });
+    // check if server has live processes
+    const pids = getPids({ pattern: registry.processPattern });
 
     // check if any pids are not tracked by bhouncer in memory
     const trackedPid = context.state.trackedPids.get(serverConfig.slug);
     const hasUntrackedPids =
       pids.size > 0 && (!trackedPid || !pids.has(String(trackedPid)));
 
-    // if has running pids that we're not tracking, it's untracked
+    // if has live pids that we have not tracked, it's untracked
     if (hasUntrackedPids) {
       untrackedServers.push(serverConfig);
     }

@@ -4,7 +4,7 @@ import { isPidActive } from './isPidActive';
 
 describe('isPidActive', () => {
   given('a pid', () => {
-    when('process is running (current process)', () => {
+    when('process is live (current process)', () => {
       then('returns true', () => {
         // use current process pid which is guaranteed to exist
         const result = isPidActive({ pid: process.pid });

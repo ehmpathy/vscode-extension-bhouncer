@@ -15,7 +15,7 @@ let state: ExtensionState = createExtensionState();
 
 /**
  * .what = vscode extension activation entry point
- * .why = registers event handlers and starts the pruning interval
+ * .why = registers event handlers and starts the prune interval
  */
 export const activate = (vsContext: vscode.ExtensionContext): void => {
   // initialize fresh state
@@ -70,7 +70,7 @@ export const activate = (vsContext: vscode.ExtensionContext): void => {
         }
       }
 
-      // clean up closed tabs from access tracking
+      // clean up closed tabs from access records
       for (const tab of event.closed) {
         if (tab.input instanceof vscode.TabInputText) {
           const uri = tab.input.uri.toString();
@@ -97,7 +97,7 @@ export const activate = (vsContext: vscode.ExtensionContext): void => {
     vscode.commands.registerCommand('bhouncer.showStatus', () => showStatus(context)),
   );
 
-  // start periodic pruning interval
+  // start periodic prune interval
   state.pruneInterval = setInterval(() => pruneEditors(context), 60 * 1000);
 
   // track current active editor on startup
@@ -123,7 +123,7 @@ export const activate = (vsContext: vscode.ExtensionContext): void => {
 export const deactivate = (): void => {
   state.output?.debug('deactivate.input', {});
 
-  // stop periodic pruning
+  // stop periodic prune
   if (state.pruneInterval) {
     clearInterval(state.pruneInterval);
   }

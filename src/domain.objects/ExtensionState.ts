@@ -12,7 +12,7 @@ export interface ExtensionState {
   /** last access time per editor uri */
   editorLastAccess: Map<string, number>;
 
-  /** interval handle for periodic pruning */
+  /** interval handle for periodic prune */
   pruneInterval: NodeJS.Timeout | undefined;
 
   /** output instance for logging */

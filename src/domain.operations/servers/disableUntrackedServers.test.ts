@@ -14,17 +14,15 @@ describe('disableUntrackedServers', () => {
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
     slug: 'terraform',
-    processPattern: 'terraform-ls',
   };
 
   const eslintServer = {
     extensions: ['.js', '.ts'],
     slug: 'eslint',
-    processPattern: 'eslintServer',
   };
 
   given('untracked servers to disable', () => {
-    when('single server needs disabling', () => {
+    when('single server needs to be disabled', () => {
       then('disables that server setting', async () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -49,7 +47,7 @@ describe('disableUntrackedServers', () => {
       });
     });
 
-    when('multiple servers need disabling', () => {
+    when('multiple servers need to be disabled', () => {
       then('disables all server settings', async () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -75,7 +73,7 @@ describe('disableUntrackedServers', () => {
       });
     });
 
-    when('no servers need disabling', () => {
+    when('no servers need to be disabled', () => {
       then('does not update any settings', async () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });

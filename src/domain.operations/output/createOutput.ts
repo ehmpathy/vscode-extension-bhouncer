@@ -48,7 +48,7 @@ export const createOutput = (input: {
     // users can manually switch to output panel and select bhouncer from dropdown
   }
 
-  // log writing helper
+  // log write helper
   const writeLog = (
     level: string,
     message: string,

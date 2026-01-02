@@ -9,18 +9,24 @@ export interface LanguageServerHookContext {
 }
 
 /**
- * .what = registry entry defining how to start and stop a language server
- * .why = enables server-specific control behavior via hooks
+ * .what = registry entry defining how to start, stop, and detect a language server
+ * .why = centralizes server-specific control behavior and detection
  */
 export interface LanguageServerRegistryEntry {
   /**
-   * .what = called when starting the server (relevant file opened)
+   * .what = process name pattern for pid detection
+   * .why = enables detection of server via pgrep
+   */
+  processPattern: string;
+
+  /**
+   * .what = called on server start (relevant file opened)
    * .why = enables server-specific startup behavior
    */
   onStart: (context: LanguageServerHookContext) => Promise<void>;
 
   /**
-   * .what = called when pruning the server (no relevant files open)
+   * .what = called on server prune (no relevant files open)
    * .why = enables server-specific shutdown behavior before pid kill
    */
   onPrune: (context: LanguageServerHookContext) => Promise<void>;
@@ -36,6 +42,7 @@ export const LANGUAGE_SERVER_REGISTRY: Record<
 > = {
   // terraform language server - controlled via setting
   terraform: {
+    processPattern: 'terraform-ls',
     onStart: async (context) => {
       const config = context.vscode.workspace.getConfiguration(
         'terraform.languageServer',
@@ -60,6 +67,7 @@ export const LANGUAGE_SERVER_REGISTRY: Record<
 
   // typescript language server - controlled via command
   typescript: {
+    processPattern: 'tsserver',
     onStart: async (context) => {
       await context.vscode.commands.executeCommand(
         'typescript.restartTsServer',
@@ -72,6 +80,7 @@ export const LANGUAGE_SERVER_REGISTRY: Record<
 
   // eslint language server - controlled via setting
   eslint: {
+    processPattern: 'eslint',
     onStart: async (context) => {
       const config = context.vscode.workspace.getConfiguration('eslint');
       await config.update(
@@ -84,6 +93,48 @@ export const LANGUAGE_SERVER_REGISTRY: Record<
       const config = context.vscode.workspace.getConfiguration('eslint');
       await config.update(
         'enable',
+        false,
+        context.vscode.ConfigurationTarget.Workspace,
+      );
+    },
+  },
+
+  // yaml language server - controlled via setting
+  yaml: {
+    processPattern: 'yaml-language-server',
+    onStart: async (context) => {
+      const config = context.vscode.workspace.getConfiguration('yaml');
+      await config.update(
+        'validate',
+        true,
+        context.vscode.ConfigurationTarget.Workspace,
+      );
+    },
+    onPrune: async (context) => {
+      const config = context.vscode.workspace.getConfiguration('yaml');
+      await config.update(
+        'validate',
+        false,
+        context.vscode.ConfigurationTarget.Workspace,
+      );
+    },
+  },
+
+  // cspell spell checker - controlled via setting
+  cspell: {
+    processPattern: 'cspell',
+    onStart: async (context) => {
+      const config = context.vscode.workspace.getConfiguration('cSpell');
+      await config.update(
+        'enabled',
+        true,
+        context.vscode.ConfigurationTarget.Workspace,
+      );
+    },
+    onPrune: async (context) => {
+      const config = context.vscode.workspace.getConfiguration('cSpell');
+      await config.update(
+        'enabled',
         false,
         context.vscode.ConfigurationTarget.Workspace,
       );

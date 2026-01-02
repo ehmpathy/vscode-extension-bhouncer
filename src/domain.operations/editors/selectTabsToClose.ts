@@ -6,7 +6,7 @@ import { getBouncePolicy } from './getBouncePolicy';
 
 /**
  * .what = selects which tabs should be closed based on limits, idle time, and per-extension policy
- * .why = implements policy-aware pruning: IDLE_LIMIT, TABS_LIMIT, or BOTH per extension
+ * .why = implements policy-aware prune: IDLE_LIMIT, TABS_LIMIT, or BOTH per extension
  */
 export const selectTabsToClose = (input: {
   tabs: EditorTabInfo[];
@@ -17,7 +17,7 @@ export const selectTabsToClose = (input: {
 }): vscode.Tab[] => {
   const tabsToClose: vscode.Tab[] = [];
 
-  // evaluate each tab against policy-aware pruning criteria
+  // evaluate each tab against policy-aware prune criteria
   input.tabs.forEach((item, index) => {
     // resolve policy for this tab's extension
     const policy = getBouncePolicy({

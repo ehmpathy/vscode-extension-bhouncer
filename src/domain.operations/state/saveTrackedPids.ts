@@ -7,7 +7,7 @@ import { findsertVscodeGitignore } from './findsertVscodeGitignore';
 
 /**
  * .what = saves tracked pids to workspace state file
- * .why = persists pid tracking across window reloads to maintain server management
+ * .why = persists tracked pids across window reloads to maintain server management
  */
 export const saveTrackedPids = (context: {
   state: ExtensionState;

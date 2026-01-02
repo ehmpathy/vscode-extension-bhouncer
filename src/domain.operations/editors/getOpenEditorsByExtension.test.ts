@@ -36,7 +36,7 @@ describe('getOpenEditorsByExtension', () => {
       });
     });
 
-    when('no matching files are open', () => {
+    when('no matched files are open', () => {
       then('returns zero counts', () => {
         window.tabGroups.all = [
           createMockTabGroup([

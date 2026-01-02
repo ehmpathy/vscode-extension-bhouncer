@@ -35,7 +35,7 @@ describe('pruneEditors', () => {
     jest.clearAllMocks();
   });
 
-  given('pruning configuration and state', () => {
+  given('prune configuration and state', () => {
     when('bhouncer is disabled', () => {
       then('does not prune any tabs', async () => {
         const state = createExtensionState();

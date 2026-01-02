@@ -6,7 +6,7 @@ import type { LanguageServerConfig } from '../../domain.objects/LanguageServerCo
 import { disableLanguageServer } from './disableLanguageServer';
 import { showStatus } from './showStatus';
 
-// mock killPidSafely to avoid actually killing processes
+// mock killPidSafely to avoid actual kill of processes
 jest.mock('../processes/killPidSafely', () => ({
   killPidSafely: jest.fn(),
 }));
@@ -45,13 +45,11 @@ describe('proveBenefit', () => {
   const terraformConfig: LanguageServerConfig = {
     slug: 'terraform',
     extensions: ['.tf', '.tfvars'],
-    processPattern: 'terraform-ls',
   };
 
   const eslintConfig: LanguageServerConfig = {
     slug: 'eslint',
     extensions: ['.js', '.ts', '.tsx'],
-    processPattern: 'eslint',
   };
 
   given('[case1] language server with tracked resources', () => {

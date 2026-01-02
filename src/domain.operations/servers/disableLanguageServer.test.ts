@@ -5,7 +5,7 @@ import { createExtensionState } from '../../domain.objects/ExtensionState';
 import type { LanguageServerConfig } from '../../domain.objects/LanguageServerConfig';
 import { disableLanguageServer } from './disableLanguageServer';
 
-// mock killPidSafely to avoid actually killing processes
+// mock killPidSafely to avoid actual kill of processes
 jest.mock('../processes/killPidSafely', () => ({
   killPidSafely: jest.fn(),
 }));
@@ -15,7 +15,7 @@ jest.mock('../state/saveTrackedPids', () => ({
   saveTrackedPids: jest.fn(),
 }));
 
-// mock getProcessResources for benefit tracking tests
+// mock getProcessResources for benefit tests
 jest.mock('../processes/getProcessResources', () => ({
   getProcessResources: jest.fn(),
 }));
@@ -35,7 +35,6 @@ describe('disableLanguageServer', () => {
   const terraformConfig: LanguageServerConfig = {
     slug: 'terraform',
     extensions: ['.tf', '.tfvars'],
-    processPattern: 'terraform-ls',
   };
 
   given('a language server configuration', () => {
@@ -96,7 +95,7 @@ describe('disableLanguageServer', () => {
     });
 
     when('server has no tracked pid', () => {
-      then('only disables the setting', async () => {
+      then('does nothing (failfast)', async () => {
         const state = createExtensionState();
         // no tracked pid for this server
 
@@ -108,12 +107,8 @@ describe('disableLanguageServer', () => {
 
         await disableLanguageServer({ config: terraformConfig }, { state });
 
-        // should call onPrune hook which updates 'enable' on scoped config
-        expect(mockUpdate).toHaveBeenCalledWith(
-          'enable',
-          false,
-          expect.anything(),
-        );
+        // should not call onPrune (no pid to kill = nothing to do)
+        expect(mockUpdate).not.toHaveBeenCalled();
 
         // should not attempt to kill
         expect(mockKillPidSafely).not.toHaveBeenCalled();
@@ -205,7 +200,6 @@ describe('disableLanguageServer', () => {
         const eslintConfig: LanguageServerConfig = {
           slug: 'eslint',
           extensions: ['.js', '.ts'],
-          processPattern: 'eslint',
         };
         state.trackedPids.set('eslint', 67890);
         mockGetProcessResources.mockReturnValue({
@@ -300,7 +294,6 @@ describe('disableLanguageServer', () => {
     const typescriptConfig: LanguageServerConfig = {
       slug: 'typescript',
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
-      processPattern: 'tsserver',
     };
 
     when('server has a tracked pid', () => {

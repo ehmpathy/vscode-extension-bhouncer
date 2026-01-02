@@ -1,6 +1,6 @@
 /**
  * .what = snapshot of a process's resource consumption
- * .why = enables before/after comparison to prove benefit of killing servers
+ * .why = enables before/after comparison to prove benefit of server kills
  */
 export interface ProcessResourceSnapshot {
   /** process id */

@@ -22,7 +22,7 @@ export const initializeTrackers = async (context: {
     settingsPath,
   });
 
-  // detect any running servers that bhouncer is not tracking
+  // detect any live servers that bhouncer has not tracked
   const { untrackedServers } = detectUntrackedServers(context);
 
   // if no untracked servers, we're good
@@ -43,7 +43,7 @@ export const initializeTrackers = async (context: {
 
   // prompt user to reload
   const action = await vscode.window.showWarningMessage(
-    `bhouncer: found ${untrackedServers.length} running language server(s) that were started before bhouncer. ` +
+    `bhouncer: found ${untrackedServers.length} live language server(s) that started before bhouncer. ` +
       `they have been disabled. please reload to let bhouncer manage them.`,
     'Reload Window',
   );

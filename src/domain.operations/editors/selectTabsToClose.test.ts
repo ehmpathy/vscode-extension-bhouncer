@@ -79,7 +79,7 @@ describe('selectTabsToClose', () => {
     });
 
     when('tabs exceed maxOpen AND are idle', () => {
-      then('returns those tabs for closing', () => {
+      then('returns those tabs to close', () => {
         const now = Date.now();
         const tabs = [
           createTabInfo('recent1.ts', now - 1000), // recent
@@ -146,7 +146,7 @@ describe('selectTabsToClose', () => {
     });
 
     when('mixed: some over limit, some idle, some both', () => {
-      then('returns all tabs matching either condition', () => {
+      then('returns all tabs that match either condition', () => {
         const now = Date.now();
         const tabs = [
           createTabInfo('recent.ts', now - 1000), // under limit, not idle
@@ -170,7 +170,7 @@ describe('selectTabsToClose', () => {
     });
 
     when('tab is under limit but idle', () => {
-      then('returns that tab for closing', () => {
+      then('returns that tab to close', () => {
         const now = Date.now();
         const tabs = [
           createTabInfo('recent.ts', now - 1000), // not idle
