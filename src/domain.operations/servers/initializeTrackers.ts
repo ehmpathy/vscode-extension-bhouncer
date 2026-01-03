@@ -22,7 +22,7 @@ export const initializeTrackers = async (context: {
     settingsPath,
   });
 
-  // detect any running servers that bhouncer is not tracking
+  // detect any live servers that bhouncer has not tracked
   const { untrackedServers } = detectUntrackedServers(context);
 
   // if no untracked servers, we're good
@@ -38,12 +38,12 @@ export const initializeTrackers = async (context: {
 
   context.state.output?.debug('initializeTrackers.output', {
     result: 'disabled_untracked',
-    servers: untrackedServers.map((s) => s.settingKey),
+    servers: untrackedServers.map((s) => s.slug),
   });
 
   // prompt user to reload
   const action = await vscode.window.showWarningMessage(
-    `bhouncer: found ${untrackedServers.length} running language server(s) that were started before bhouncer. ` +
+    `bhouncer: found ${untrackedServers.length} live language server(s) that started before bhouncer. ` +
       `they have been disabled. please reload to let bhouncer manage them.`,
     'Reload Window',
   );
@@ -56,7 +56,7 @@ export const initializeTrackers = async (context: {
     await disableUntrackedServers({ untrackedServers: allServers }, context);
 
     context.state.output?.debug('initializeTrackers.reload', {
-      servers: allServers.map((s) => s.settingKey),
+      servers: allServers.map((s) => s.slug),
     });
     await vscode.commands.executeCommand('workbench.action.reloadWindow');
   }

@@ -1,8 +1,8 @@
 import type * as vscode from 'vscode';
 
 /**
- * .what = information about an editor tab with access tracking
- * .why = enables sorting and filtering tabs by last access time for pruning
+ * .what = information about an editor tab with access records
+ * .why = enables sort and filter of tabs by last access time for prune
  */
 export interface EditorTabInfo {
   /** the vscode tab reference */

@@ -5,33 +5,38 @@ import {
   createMockTabGroup,
   resetMocks,
   window,
-  workspace,
 } from '../../.test/mocks/vscode';
 import { createExtensionState } from '../../domain.objects/ExtensionState';
 import { createOutput } from '../output/createOutput';
 import { detectLanguageServerState } from './detectLanguageServerState';
 
+// mock getPids to control process detection
+jest.mock('../processes/getPids', () => ({
+  getPids: jest.fn(),
+}));
+
+import { getPids } from '../processes/getPids';
+const mockGetPids = getPids as jest.Mock;
+
 describe('detectLanguageServerState', () => {
   beforeEach(() => {
     resetMocks();
+    jest.clearAllMocks();
   });
 
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
-    settingKey: 'terraform.languageServer.enable',
-    processPattern: 'terraform-ls',
+    slug: 'terraform',
   };
 
   given('a language server config', () => {
-    when('relevant files are open and server is enabled', () => {
+    when('relevant files are open and server process is live', () => {
       then('returns desired=live, detected=live', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 
-        workspace.getConfiguration.mockReturnValue({
-          get: jest.fn().mockReturnValue(true),
-          update: jest.fn(),
-        });
+        // process is live
+        mockGetPids.mockReturnValue(new Set(['12345']));
 
         window.tabGroups.all = [
           createMockTabGroup([
@@ -48,15 +53,13 @@ describe('detectLanguageServerState', () => {
       });
     });
 
-    when('relevant files are open but server is disabled', () => {
+    when('relevant files are open but server process is not live', () => {
       then('returns desired=live, detected=dead', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 
-        workspace.getConfiguration.mockReturnValue({
-          get: jest.fn().mockReturnValue(false),
-          update: jest.fn(),
-        });
+        // process is not live
+        mockGetPids.mockReturnValue(new Set());
 
         window.tabGroups.all = [
           createMockTabGroup([
@@ -73,15 +76,13 @@ describe('detectLanguageServerState', () => {
       });
     });
 
-    when('no relevant files are open and server is enabled', () => {
+    when('no relevant files are open and server process is live', () => {
       then('returns desired=dead, detected=live', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 
-        workspace.getConfiguration.mockReturnValue({
-          get: jest.fn().mockReturnValue(true),
-          update: jest.fn(),
-        });
+        // process is live
+        mockGetPids.mockReturnValue(new Set(['12345']));
 
         window.tabGroups.all = [
           createMockTabGroup([
@@ -98,15 +99,13 @@ describe('detectLanguageServerState', () => {
       });
     });
 
-    when('no relevant files are open and server is disabled', () => {
+    when('no relevant files are open and server process is not live', () => {
       then('returns desired=dead, detected=dead', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 
-        workspace.getConfiguration.mockReturnValue({
-          get: jest.fn().mockReturnValue(false),
-          update: jest.fn(),
-        });
+        // process is not live
+        mockGetPids.mockReturnValue(new Set());
 
         window.tabGroups.all = [];
 

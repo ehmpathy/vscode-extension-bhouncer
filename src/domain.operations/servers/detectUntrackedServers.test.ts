@@ -5,7 +5,7 @@ import { createExtensionState } from '../../domain.objects/ExtensionState';
 import { createOutput } from '../output/createOutput';
 import { detectUntrackedServers } from './detectUntrackedServers';
 
-// mock getPids to control which processes are "running"
+// mock getPids to control which processes are "live"
 jest.mock('../processes/getPids', () => ({
   getPids: jest.fn(),
 }));
@@ -21,18 +21,16 @@ describe('detectUntrackedServers', () => {
 
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
-    settingKey: 'terraform.languageServer.enable',
-    processPattern: 'terraform-ls',
+    slug: 'terraform',
   };
 
   const eslintServer = {
     extensions: ['.js', '.ts'],
-    settingKey: 'eslint.enable',
-    processPattern: 'eslintServer',
+    slug: 'eslint',
   };
 
   given('configured language servers', () => {
-    when('no servers have running processes', () => {
+    when('no servers have live processes', () => {
       then('returns empty untracked list', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -53,11 +51,11 @@ describe('detectUntrackedServers', () => {
       });
     });
 
-    when('server has running process but is already tracked in memory', () => {
+    when('server has live process but is already tracked in memory', () => {
       then('returns empty untracked list', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
 
         workspace.getConfiguration.mockImplementation((section?: string) => ({
           get: jest.fn((key: string) => {
@@ -75,31 +73,7 @@ describe('detectUntrackedServers', () => {
       });
     });
 
-    when('server has running process but is already disabled in settings', () => {
-      then('returns empty untracked list', () => {
-        const state = createExtensionState();
-        state.output = createOutput({ enabled: false });
-
-        workspace.getConfiguration.mockImplementation((section?: string) => ({
-          get: jest.fn((key: string) => {
-            if (section === 'bhouncer' && key === 'servers')
-              return [terraformServer];
-            // server is disabled in workspace settings
-            if (key === 'terraform.languageServer.enable') return false;
-            return undefined;
-          }),
-        }));
-
-        // process is running but setting is already disabled
-        mockGetPids.mockReturnValue(new Set(['99999']));
-
-        const result = detectUntrackedServers({ state });
-
-        expect(result.untrackedServers).toEqual([]);
-      });
-    });
-
-    when('server has running process that is not tracked and not disabled', () => {
+    when('server has live process that is not tracked in memory', () => {
       then('returns that server as untracked', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -108,12 +82,11 @@ describe('detectUntrackedServers', () => {
           get: jest.fn((key: string) => {
             if (section === 'bhouncer' && key === 'servers')
               return [terraformServer];
-            // server is enabled (or not set) in workspace settings
-            if (key === 'terraform.languageServer.enable') return true;
             return undefined;
           }),
         }));
 
+        // process is live but not tracked in memory
         mockGetPids.mockReturnValue(new Set(['99999']));
 
         const result = detectUntrackedServers({ state });
@@ -122,18 +95,16 @@ describe('detectUntrackedServers', () => {
       });
     });
 
-    when('server has running process with different pid than tracked', () => {
+    when('server has live process with different pid than tracked', () => {
       then('returns that server as untracked', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
 
         workspace.getConfiguration.mockImplementation((section?: string) => ({
           get: jest.fn((key: string) => {
             if (section === 'bhouncer' && key === 'servers')
               return [terraformServer];
-            // server is enabled in workspace settings
-            if (key === 'terraform.languageServer.enable') return true;
             return undefined;
           }),
         }));
@@ -147,26 +118,23 @@ describe('detectUntrackedServers', () => {
       });
     });
 
-    when('multiple servers with mixed tracking state', () => {
+    when('multiple servers with mixed track state', () => {
       then('returns only untracked servers', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
-        state.trackedPids.set('terraform.languageServer.enable', 12345);
+        state.trackedPids.set('terraform', 12345);
 
         workspace.getConfiguration.mockImplementation((section?: string) => ({
           get: jest.fn((key: string) => {
             if (section === 'bhouncer' && key === 'servers')
               return [terraformServer, eslintServer];
-            // both servers enabled in workspace settings
-            if (key === 'terraform.languageServer.enable') return true;
-            if (key === 'eslint.enable') return true;
             return undefined;
           }),
         }));
 
         mockGetPids.mockImplementation(({ pattern }: { pattern: string }) => {
           if (pattern === 'terraform-ls') return new Set(['12345']);
-          if (pattern === 'eslintServer') return new Set(['88888']);
+          if (pattern === 'eslint') return new Set(['88888']);
           return new Set();
         });
 
@@ -177,8 +145,8 @@ describe('detectUntrackedServers', () => {
       });
     });
 
-    when('multiple servers where one is disabled in settings', () => {
-      then('returns only untracked servers not disabled in settings', () => {
+    when('multiple servers both untracked', () => {
+      then('returns all untracked servers', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 
@@ -186,23 +154,20 @@ describe('detectUntrackedServers', () => {
           get: jest.fn((key: string) => {
             if (section === 'bhouncer' && key === 'servers')
               return [terraformServer, eslintServer];
-            // terraform is disabled in settings (tracked), eslint is enabled
-            if (key === 'terraform.languageServer.enable') return false;
-            if (key === 'eslint.enable') return true;
             return undefined;
           }),
         }));
 
         mockGetPids.mockImplementation(({ pattern }: { pattern: string }) => {
           if (pattern === 'terraform-ls') return new Set(['12345']);
-          if (pattern === 'eslintServer') return new Set(['88888']);
+          if (pattern === 'eslint') return new Set(['88888']);
           return new Set();
         });
 
         const result = detectUntrackedServers({ state });
 
-        // terraform is tracked via settings (disabled), eslint is untracked
-        expect(result.untrackedServers).toEqual([eslintServer]);
+        // neither server is tracked in memory
+        expect(result.untrackedServers).toEqual([terraformServer, eslintServer]);
       });
     });
   });

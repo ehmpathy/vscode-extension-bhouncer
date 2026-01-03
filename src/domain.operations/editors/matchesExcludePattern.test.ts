@@ -44,7 +44,7 @@ describe('matchesExcludePattern', () => {
       });
     });
 
-    when('pattern uses double star for deep matching', () => {
+    when('pattern uses double star for deep match', () => {
       then('matches nested paths', () => {
         const result = matchesExcludePattern({
           uri: 'file:///project/src/deep/nested/file.config.json',

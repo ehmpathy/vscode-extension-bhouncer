@@ -18,7 +18,7 @@ const limiter = new Bottleneck({
 
 /**
  * .what = prunes stale editors based on idle time and count limits
- * .why = reduces memory by closing editors that haven't been used recently
+ * .why = reduces memory via close of editors that haven't been used recently
  */
 export const pruneEditors = (context: { state: ExtensionState }): Promise<void> =>
   limiter.schedule(async () => {
@@ -29,7 +29,7 @@ export const pruneEditors = (context: { state: ExtensionState }): Promise<void> 
     // skip if bhouncer is disabled
     if (!enabled) return;
 
-    // load pruning settings
+    // load prune settings
     const maxOpen = config.get<number>('editors.maxOpen', 10);
     const idleTimeoutMs =
       config.get<number>('editors.idleTimeoutMinutes', 10) * 60 * 1000;
@@ -107,7 +107,7 @@ export const pruneEditors = (context: { state: ExtensionState }): Promise<void> 
       closed: toClose.map((t) => t.path),
     });
 
-    // update language servers after closing (ignore bottleneck drops, rethrow others)
+    // update language servers after close (ignore bottleneck drops, rethrow others)
     await checkAndUpdateLanguageServers(context).catch((error) => {
       const isBottleneckDrop =
         error instanceof Error &&

@@ -4,8 +4,8 @@ import type { EditorTabInfo } from '../../domain.objects/EditorTabInfo';
 import { matchesExcludePattern } from './matchesExcludePattern';
 
 /**
- * .what = collects tabs eligible for pruning, sorted by last access time
- * .why = centralizes tab filtering logic for editor pruning decisions
+ * .what = collects tabs eligible for prune, sorted by last access time
+ * .why = centralizes tab filtering logic for editor prune decisions
  */
 export const getEligibleTabsForPruning = (input: {
   editorLastAccess: Map<string, number>;

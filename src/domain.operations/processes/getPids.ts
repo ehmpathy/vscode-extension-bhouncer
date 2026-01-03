@@ -1,14 +1,14 @@
 import { execSync, ExecSyncOptionsWithStringEncoding } from 'child_process';
 
 /**
- * .what = retrieves process ids matching a pattern via pgrep
+ * .what = retrieves process ids that match a pattern via pgrep
  * .why = enables before/after diffing to identify newly spawned language server pids
  *
  * .note = pgrep exits with code 1 when no processes match (not an error)
  */
 export const getPids = (input: { pattern: string }): Set<string> => {
   try {
-    // query pgrep for matching processes
+    // query pgrep for processes that match
     const options: ExecSyncOptionsWithStringEncoding = { encoding: 'utf8' };
     const output = execSync(`pgrep -f "${input.pattern}"`, options);
 

@@ -4,9 +4,9 @@ import { getPids } from './getPids';
 
 describe('getPids', () => {
   given('a process pattern', () => {
-    when('matching processes exist', () => {
+    when('matched processes exist', () => {
       then('returns set of pid strings', () => {
-        // 'node' should always be running (jest itself uses node)
+        // 'node' should always be live (jest itself uses node)
         const result = getPids({ pattern: 'node' });
 
         expect(result).toBeInstanceOf(Set);
@@ -19,7 +19,7 @@ describe('getPids', () => {
       });
     });
 
-    when('no matching processes exist', () => {
+    when('no matched processes exist', () => {
       then('returns empty set', () => {
         // pattern that should never match anything - use exact binary name format
         const result = getPids({ pattern: '^/zzz-no-such-bin-xyz$' });

@@ -1,14 +1,12 @@
 /**
- * .what = configuration for a managed language server
- * .why = defines the relationship between file extensions, vscode settings, and process patterns
+ * .what = user-facing configuration for a managed language server
+ * .why = defines which file extensions trigger which server
+ * .note = all implementation details (processPattern, hooks) are in the registry
  */
 export interface LanguageServerConfig {
+  /** unique identifier for this server (e.g., 'typescript', 'terraform') */
+  slug: string;
+
   /** file extensions that trigger this server (e.g., ['.tf', '.tfvars']) */
   extensions: string[];
-
-  /** vscode setting key to enable/disable (e.g., 'terraform.languageServer.enable') */
-  settingKey: string;
-
-  /** process name pattern for pid detection (e.g., 'terraform-ls') */
-  processPattern: string;
 }

@@ -26,8 +26,7 @@ describe('initializeTrackers', () => {
 
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
-    settingKey: 'terraform.languageServer.enable',
-    processPattern: 'terraform-ls',
+    slug: 'terraform',
   };
 
   given('extension activation', () => {
@@ -60,7 +59,7 @@ describe('initializeTrackers', () => {
           { state },
         );
         expect(window.showWarningMessage).toHaveBeenCalledWith(
-          expect.stringContaining('1 running language server'),
+          expect.stringContaining('1 live language server'),
           'Reload Window',
         );
       });

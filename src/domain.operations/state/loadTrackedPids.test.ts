@@ -52,8 +52,8 @@ describe('loadTrackedPids', () => {
         mockFs.readFileSync.mockReturnValue(
           JSON.stringify({
             trackedPids: {
-              'terraform.languageServer.enable': 12345,
-              'eslint.enable': 67890,
+              'terraform': 12345,
+              'eslint': 67890,
             },
           }),
         );
@@ -62,10 +62,10 @@ describe('loadTrackedPids', () => {
         loadTrackedPids({ state });
 
         expect(state.trackedPids.size).toEqual(2);
-        expect(state.trackedPids.get('terraform.languageServer.enable')).toEqual(
+        expect(state.trackedPids.get('terraform')).toEqual(
           12345,
         );
-        expect(state.trackedPids.get('eslint.enable')).toEqual(67890);
+        expect(state.trackedPids.get('eslint')).toEqual(67890);
       });
     });
 
@@ -78,8 +78,8 @@ describe('loadTrackedPids', () => {
         mockFs.readFileSync.mockReturnValue(
           JSON.stringify({
             trackedPids: {
-              'terraform.languageServer.enable': 12345,
-              'eslint.enable': 67890,
+              'terraform': 12345,
+              'eslint': 67890,
             },
           }),
         );
@@ -92,10 +92,10 @@ describe('loadTrackedPids', () => {
         loadTrackedPids({ state });
 
         expect(state.trackedPids.size).toEqual(1);
-        expect(state.trackedPids.get('terraform.languageServer.enable')).toEqual(
+        expect(state.trackedPids.get('terraform')).toEqual(
           12345,
         );
-        expect(state.trackedPids.has('eslint.enable')).toBe(false);
+        expect(state.trackedPids.has('eslint')).toBe(false);
       });
     });
 
@@ -130,7 +130,7 @@ describe('loadTrackedPids', () => {
 
   given('no workspace folder', () => {
     when('loadTrackedPids is called', () => {
-      then('skips loading', () => {
+      then('skips load', () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
 

@@ -6,6 +6,7 @@ import type { LanguageServerConfig } from '../../domain.objects/LanguageServerCo
 import { detectLanguageServerState } from './detectLanguageServerState';
 import { disableLanguageServer } from './disableLanguageServer';
 import { enableLanguageServer } from './enableLanguageServer';
+import { restartLanguageServer } from './restartLanguageServer';
 
 // limiter ensures only one update runs at a time, debounced to 10s, max queue of 3
 const limiter = new Bottleneck({
@@ -39,15 +40,23 @@ export const checkAndUpdateLanguageServers = (context: {
         context,
       );
 
-      // skip if already in desired state
-      if (before.desired === before.detected) continue;
+      // check if server is live but we don't have its pid tracked
+      const trackedPid = context.state.trackedPids.get(serverConfig.slug);
+      const isLiveButUntracked =
+        before.detected === 'live' && trackedPid === undefined;
+
+      // skip if already in desired state AND we have pid tracked (if live)
+      if (before.desired === before.detected && !isLiveButUntracked) continue;
 
       // apply state change
       try {
-        // apply the change
-        if (before.desired === 'live') {
+        // if live but untracked, explicitly restart to capture pid
+        if (isLiveButUntracked && before.desired === 'live') {
+          await restartLanguageServer({ config: serverConfig }, context);
+        } else if (before.desired === 'live') {
           await enableLanguageServer({ config: serverConfig }, context);
-        } else {
+        } else if (before.desired === 'dead' && trackedPid !== undefined) {
+          // only disable if we have a pid to kill
           await disableLanguageServer({ config: serverConfig }, context);
         }
 
@@ -55,7 +64,7 @@ export const checkAndUpdateLanguageServers = (context: {
         detectLanguageServerState({ config: serverConfig }, context);
       } catch (error) {
         context.state.output?.warn('checkAndUpdateLanguageServers.error', {
-          key: serverConfig.settingKey,
+          slug: serverConfig.slug,
           reason: error instanceof Error ? error.message : String(error),
         });
       }

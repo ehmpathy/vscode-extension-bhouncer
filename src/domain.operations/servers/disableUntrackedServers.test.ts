@@ -13,18 +13,16 @@ describe('disableUntrackedServers', () => {
 
   const terraformServer = {
     extensions: ['.tf', '.tfvars'],
-    settingKey: 'terraform.languageServer.enable',
-    processPattern: 'terraform-ls',
+    slug: 'terraform',
   };
 
   const eslintServer = {
     extensions: ['.js', '.ts'],
-    settingKey: 'eslint.enable',
-    processPattern: 'eslintServer',
+    slug: 'eslint',
   };
 
   given('untracked servers to disable', () => {
-    when('single server needs disabling', () => {
+    when('single server needs to be disabled', () => {
       then('disables that server setting', async () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -40,15 +38,16 @@ describe('disableUntrackedServers', () => {
           { state },
         );
 
+        // onPrune hook updates 'enable' on scoped config
         expect(mockUpdate).toHaveBeenCalledWith(
-          'terraform.languageServer.enable',
+          'enable',
           false,
           2, // vscode.ConfigurationTarget.Workspace
         );
       });
     });
 
-    when('multiple servers need disabling', () => {
+    when('multiple servers need to be disabled', () => {
       then('disables all server settings', async () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });
@@ -64,21 +63,17 @@ describe('disableUntrackedServers', () => {
           { state },
         );
 
+        // both onPrune hooks update 'enable' on their scoped configs
         expect(mockUpdate).toHaveBeenCalledTimes(2);
         expect(mockUpdate).toHaveBeenCalledWith(
-          'terraform.languageServer.enable',
-          false,
-          2, // vscode.ConfigurationTarget.Workspace
-        );
-        expect(mockUpdate).toHaveBeenCalledWith(
-          'eslint.enable',
+          'enable',
           false,
           2, // vscode.ConfigurationTarget.Workspace
         );
       });
     });
 
-    when('no servers need disabling', () => {
+    when('no servers need to be disabled', () => {
       then('does not update any settings', async () => {
         const state = createExtensionState();
         state.output = createOutput({ enabled: false });

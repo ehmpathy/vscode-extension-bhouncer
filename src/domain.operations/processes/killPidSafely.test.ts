@@ -28,7 +28,7 @@ describe('killPidSafely', () => {
 
     when('error is not ESRCH (e.g., EPERM for pid 1)', () => {
       then('throws the error (fail fast)', () => {
-        // pid 1 (init) is protected - killing it causes EPERM
+        // pid 1 (init) is protected - to kill it causes EPERM
         expect(() => killPidSafely({ pid: 1 })).toThrow();
       });
     });

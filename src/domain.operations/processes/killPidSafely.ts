@@ -1,5 +1,5 @@
 /**
- * .what = kills a process by pid, handling the case where it already exited
+ * .what = kills a process by pid, covers the case where it already exited
  * .why = process.kill throws ESRCH when pid doesn't exist, which is expected during cleanup
  *
  * .note = only ESRCH is caught; all other errors propagate (fail fast)

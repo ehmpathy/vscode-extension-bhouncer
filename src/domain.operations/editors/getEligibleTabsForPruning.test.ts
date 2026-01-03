@@ -155,7 +155,7 @@ describe('getEligibleTabsForPruning', () => {
     });
 
     when('exclude patterns match some tabs', () => {
-      then('excludes matching tabs', () => {
+      then('excludes tabs that match', () => {
         window.tabGroups.all = [
           createMockTabGroup([
             createMockTab({ fsPath: '/project/package.json' }),

@@ -7,7 +7,7 @@ import { isPidActive } from '../processes/isPidActive';
 
 /**
  * .what = loads tracked pids from workspace state file
- * .why = restores pid tracking after window reload to avoid re-disabling servers
+ * .why = restores tracked pids after window reload to avoid re-disable of servers
  */
 export const loadTrackedPids = (context: {
   state: ExtensionState;
@@ -49,7 +49,7 @@ export const loadTrackedPids = (context: {
 
     if (data.trackedPids) {
       for (const [key, pid] of Object.entries(data.trackedPids)) {
-        // verify pid is still running before tracking
+        // verify pid is still live before we track it
         if (isPidActive({ pid })) {
           context.state.trackedPids.set(key, pid);
           loadedPids[key] = pid;
